@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Detection - Poultry Monitoring System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-kiwi-bird"></i>
+                <span>Poultry Monitor</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li class="nav-item"><a href="/disease" class="nav-link active">Disease Detection</a></li>
+                <li class="nav-item"><a href="/weight" class="nav-link">Weight Estimation</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="page-header">
+            <h1>Disease Detection</h1>
+            <p>Detect diseases in broiler chickens and through fecal analysis</p>
+        </div>
+
+        <section class="models-section">
+            <div class="model-cards">
+                <div class="model-card">
+                    <div class="model-icon">
+                        <i class="fas fa-disease"></i>
+                    </div>
+                    <h2>Broiler Disease Detection</h2>
+                    <p>Upload an image of a broiler chicken to detect potential diseases</p>
+                    <div class="upload-area" id="broiler-upload">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload broiler chicken image</p>
+                        <input type="file" id="broiler-file" accept="image/*" hidden>
+                    </div>
+                    <div class="selected-file" id="broiler-selected-file">
+                        <span>No file selected</span>
+                    </div>
+                    <button class="btn btn-primary" id="analyze-broiler" disabled>Analyze</button>
+                    <div class="loading-spinner" id="broiler-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Analyzing broiler image...</span>
+                    </div>
+                </div>
+
+                <div class="model-card">
+                    <div class="model-icon">
+                        <i class="fas fa-poop"></i>
+                    </div>
+                    <h2>Fecal Analysis</h2>
+                    <p>Upload a fecal image to detect diseases through fecal matter</p>
+                    <div class="upload-area" id="fecal-upload">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload fecal image</p>
+                        <input type="file" id="fecal-file" accept="image/*" hidden>
+                    </div>
+                    <div class="selected-file" id="fecal-selected-file">
+                        <span>No file selected</span>
+                    </div>
+                    <button class="btn btn-primary" id="analyze-fecal" disabled>Analyze</button>
+                    <div class="loading-spinner" id="fecal-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Analyzing fecal image...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Broiler Results Section -->
+        <section class="results-section" id="broiler-results" style="display: none;">
+            <h2>Broiler Disease Detection Results</h2>
+            <div class="results-container">
+                <div class="result-display">
+                    <div class="image-preview">
+                        <img id="broiler-output-image" src="" alt="Analysis Result" style="display: none; max-width: 100%; border-radius: 8px;">
+                        <div class="preview-placeholder" id="broiler-visualization-placeholder">
+                            <i class="fas fa-image"></i>
+                            <p>Analysis visualization will appear here</p>
+                        </div>
+                    </div>
+                    <div class="diagnosis-result">
+                        <div class="diagnosis-header-section">
+                            <h3>Diagnosis</h3>
+                            <button class="btn btn-download" id="download-broiler-report" style="display: none;">
+                                <i class="fas fa-download"></i> Download Report
+                            </button>
+                        </div>
+                        <div class="diagnosis-info" id="broiler-diagnosis-content">
+                            <div class="diagnosis-header">
+                                <h4 id="disease-name">Unknown</h4>
+                                <span class="confidence-badge" id="confidence-badge">0%</span>
+                            </div>
+                            <div class="disease-description-box">
+                                <p id="disease-description">No diagnosis available yet.</p>
+                            </div>
+                            
+                            <div class="confidence-score">
+                                <div class="score-bar">
+                                    <div class="score-fill" id="confidence-fill" style="width: 0%"></div>
+                                </div>
+                                <span class="score-text" id="confidence-text">Confidence: 0%</span>
+                            </div>
+                            
+                            <div class="info-section symptoms">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Symptoms</h4>
+                                <ul class="symptoms-list" id="symptoms-list">
+                                    <li>No symptoms data available</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="info-section recommendations">
+                                <h4><i class="fas fa-pills"></i> Recommended Treatment</h4>
+                                <div id="treatment-details">
+                                    <ul class="recommendations-list" id="recommendations-list">
+                                        <li>No treatment recommendations available</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="info-section prevention" id="broiler-prevention-section" style="display: none;">
+                                <h4><i class="fas fa-shield-alt"></i> Prevention Measures</h4>
+                                <ul class="prevention-list" id="broiler-prevention-list">
+                                </ul>
+                            </div>
+                            
+                            <div class="additional-info" id="additional-info" style="display: none;">
+                                <h4><i class="fas fa-info-circle"></i> Additional Information</h4>
+                                <div id="additional-details"></div>
+                            </div>
+                            
+                            <div class="medication-guidelines" id="broiler-medication-guidelines" style="display: none;">
+                                <h4><i class="fas fa-clipboard-list"></i> ملخص عام للجرعات والإدارة</h4>
+                                <div class="guidelines-content">
+                                    <div class="guideline-section">
+                                        <h5>قواعد عامة لإعطاء الأدوية:</h5>
+                                        <ul class="guidelines-list">
+                                            <li><strong>حساب الجرعة:</strong> بناءً على وزن الطيور أو كمية الماء المتوقع استهلاكها</li>
+                                            <li><strong>وقت الإعطاء:</strong> في الصباح الباكر مع الماء النظيف</li>
+                                            <li><strong>فترة العلاج:</strong> 3-7 أيام حسب شدة المرض</li>
+                                            <li><strong>فترة السحب:</strong> مراعاة فترة سحب الأدوية قبل الذبح</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="guideline-section">
+                                        <h5>بروتوكول الطوارئ:</h5>
+                                        <ul class="guidelines-list">
+                                            <li><strong>التشخيص المبكر:</strong> مراقبة الأعراض اليومية</li>
+                                            <li><strong>العزل الفوري:</strong> فصل الطيور المريضة</li>
+                                            <li><strong>العلاج الجماعي:</strong> إعطاء العلاج للقطيع كاملاً في الأمراض المعدية</li>
+                                            <li><strong>التطهير:</strong> تنظيف وتطهير الحظيرة والمعدات</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="guideline-section">
+                                        <h5>الوقاية خير من العلاج:</h5>
+                                        <ul class="guidelines-list prevention-checklist">
+                                            <li><i class="fas fa-check-circle"></i> برنامج تحصين منتظم</li>
+                                            <li><i class="fas fa-check-circle"></i> نظافة وتطهير دوري</li>
+                                            <li><i class="fas fa-check-circle"></i> تهوية جيدة وكثافة مناسبة</li>
+                                            <li><i class="fas fa-check-circle"></i> تغذية متوازنة وماء نظيف</li>
+                                            <li><i class="fas fa-check-circle"></i> إدارة الإجهاد وتجنب العوامل المسببة له</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="guideline-section warning-section">
+                                        <h5><i class="fas fa-exclamation-triangle"></i> تحذيرات مهمة:</h5>
+                                        <ul class="guidelines-list warning-list">
+                                            <li><strong>استشارة البيطري:</strong> ضرورية قبل بدء أي برنامج علاجي</li>
+                                            <li><strong>الالتزام بالجرعات:</strong> تجنب زيادة الجرعات دون استشارة</li>
+                                            <li><strong>فترات السحب:</strong> ضرورية لمنع بقايا الأدوية في اللحم والبيض</li>
+                                            <li><strong>تسجيل العلاج:</strong> توثيق جميع العلاجات المستخدمة</li>
+                                            <li><strong>مراقبة الاستجابة:</strong> تقييم فعالية العلاج بعد 48-72 ساعة</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fecal Results Section - CORRECTED -->
+        <section class="results-section" id="fecal-results" style="display: none;">
+            <h2>Fecal Analysis Results</h2>
+            <div class="results-container">
+                <div class="result-display">
+                    <div class="image-preview">
+                        <img id="fecal-output-image" src="" alt="Fecal Analysis Result" style="display: none; max-width: 100%; border-radius: 8px;">
+                        <div class="preview-placeholder" id="fecal-visualization-placeholder">
+                            <i class="fas fa-microscope"></i>
+                            <p>Fecal analysis visualization will appear here</p>
+                        </div>
+                    </div>
+                    <div class="diagnosis-result">
+                        <div class="diagnosis-header-section">
+                            <h3>Fecal Analysis</h3>
+                            <button class="btn btn-download" id="download-fecal-report" style="display: none;">
+                                <i class="fas fa-download"></i> Download Report
+                            </button>
+                        </div>
+                        <div class="diagnosis-info" id="fecal-diagnosis-content">
+                            <div class="diagnosis-header">
+                                <h4 id="fecal-disease-name">Unknown</h4>
+                                <span class="confidence-badge" id="fecal-confidence-badge">0%</span>
+                            </div>
+                            <div class="disease-description-box">
+                                <p id="fecal-disease-description">No analysis available yet.</p>
+                            </div>
+                            
+                            <div class="confidence-score">
+                                <div class="score-bar">
+                                    <div class="score-fill" id="fecal-confidence-fill" style="width: 0%"></div>
+                                </div>
+                                <span class="score-text" id="fecal-confidence-text">Confidence: 0%</span>
+                            </div>
+                            
+                            <div class="info-section symptoms">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Symptoms</h4>
+                                <ul class="symptoms-list" id="fecal-symptoms-list">
+                                    <li>No symptoms data available</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="info-section recommendations">
+                                <h4><i class="fas fa-pills"></i> Recommended Treatment</h4>
+                                <div id="fecal-treatment-details">
+                                    <ul class="recommendations-list" id="fecal-recommendations-list">
+                                        <li>No treatment recommendations available</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="info-section prevention" id="fecal-prevention-section" style="display: none;">
+                                <h4><i class="fas fa-shield-alt"></i> Prevention Measures</h4>
+                                <ul class="prevention-list" id="fecal-prevention-list">
+                                </ul>
+                            </div>
+                            
+                            <div class="additional-info" id="fecal-additional-info" style="display: none;">
+                                <h4><i class="fas fa-info-circle"></i> Additional Information</h4>
+                                <div id="fecal-additional-details"></div>
+                            </div>
+                            
+                            <div class="medication-guidelines" id="fecal-medication-guidelines" style="display: none;">
+                                <h4><i class="fas fa-clipboard-list"></i> ملخص عام للجرعات والإدارة</h4>
+                                <div class="guidelines-content">
+                                    <div class="guideline-section">
+                                        <h5>قواعد عامة لإعطاء الأدوية:</h5>
+                                        <ul class="guidelines-list">
+                                            <li><strong>حساب الجرعة:</strong> بناءً على وزن الطيور أو كمية الماء المتوقع استهلاكها</li>
+                                            <li><strong>وقت الإعطاء:</strong> في الصباح الباكر مع الماء النظيف</li>
+                                            <li><strong>فترة العلاج:</strong> 3-7 أيام حسب شدة المرض</li>
+                                            <li><strong>فترة السحب:</strong> مراعاة فترة سحب الأدوية قبل الذبح</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="guideline-section">
+                                        <h5>بروتوكول الطوارئ:</h5>
+                                        <ul class="guidelines-list">
+                                            <li><strong>التشخيص المبكر:</strong> مراقبة الأعراض اليومية</li>
+                                            <li><strong>العزل الفوري:</strong> فصل الطيور المريضة</li>
+                                            <li><strong>العلاج الجماعي:</strong> إعطاء العلاج للقطيع كاملاً في الأمراض المعدية</li>
+                                            <li><strong>التطهير:</strong> تنظيف وتطهير الحظيرة والمعدات</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="guideline-section">
+                                        <h5>الوقاية خير من العلاج:</h5>
+                                        <ul class="guidelines-list prevention-checklist">
+                                            <li><i class="fas fa-check-circle"></i> برنامج تحصين منتظم</li>
+                                            <li><i class="fas fa-check-circle"></i> نظافة وتطهير دوري</li>
+                                            <li><i class="fas fa-check-circle"></i> تهوية جيدة وكثافة مناسبة</li>
+                                            <li><i class="fas fa-check-circle"></i> تغذية متوازنة وماء نظيف</li>
+                                            <li><i class="fas fa-check-circle"></i> إدارة الإجهاد وتجنب العوامل المسببة له</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="guideline-section warning-section">
+                                        <h5><i class="fas fa-exclamation-triangle"></i> تحذيرات مهمة:</h5>
+                                        <ul class="guidelines-list warning-list">
+                                            <li><strong>استشارة البيطري:</strong> ضرورية قبل بدء أي برنامج علاجي</li>
+                                            <li><strong>الالتزام بالجرعات:</strong> تجنب زيادة الجرعات دون استشارة</li>
+                                            <li><strong>فترات السحب:</strong> ضرورية لمنع بقايا الأدوية في اللحم والبيض</li>
+                                            <li><strong>تسجيل العلاج:</strong> توثيق جميع العلاجات المستخدمة</li>
+                                            <li><strong>مراقبة الاستجابة:</strong> تقييم فعالية العلاج بعد 48-72 ساعة</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2023 Poultry Monitoring System. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Disease Detection JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Broiler disease detection elements
+            const broilerUpload = document.getElementById('broiler-upload');
+            const broilerFile = document.getElementById('broiler-file');
+            const broilerSelectedFile = document.getElementById('broiler-selected-file');
+            const analyzeBroilerBtn = document.getElementById('analyze-broiler');
+            const broilerLoading = document.getElementById('broiler-loading');
+            const broilerResults = document.getElementById('broiler-results');
+
+            // Fecal analysis elements
+            const fecalUpload = document.getElementById('fecal-upload');
+            const fecalFile = document.getElementById('fecal-file');
+            const fecalSelectedFile = document.getElementById('fecal-selected-file');
+            const analyzeFecalBtn = document.getElementById('analyze-fecal');
+            const fecalLoading = document.getElementById('fecal-loading');
+            const fecalResults = document.getElementById('fecal-results');
+
+            let broilerCurrentFile = null;
+            let fecalCurrentFile = null;
+
+            // Broiler disease detection handlers
+            broilerUpload.addEventListener('click', () => {
+                broilerFile.click();
+            });
+
+            broilerFile.addEventListener('change', handleBroilerFileSelect);
+            analyzeBroilerBtn.addEventListener('click', analyzeBroilerDisease);
+
+            // Fecal analysis handlers
+            fecalUpload.addEventListener('click', () => {
+                fecalFile.click();
+            });
+
+            fecalFile.addEventListener('change', handleFecalFileSelect);
+            analyzeFecalBtn.addEventListener('click', analyzeFecal);
+
+            function handleBroilerFileSelect(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    broilerCurrentFile = file;
+                    broilerSelectedFile.innerHTML = `<span>Selected: ${file.name}</span>`;
+                    analyzeBroilerBtn.disabled = false;
+                    broilerResults.style.display = 'none';
+                }
+            }
+
+            function handleFecalFileSelect(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    fecalCurrentFile = file;
+                    fecalSelectedFile.innerHTML = `<span>Selected: ${file.name}</span>`;
+                    analyzeFecalBtn.disabled = false;
+                    fecalResults.style.display = 'none';
+                }
+            }
+
+            async function analyzeBroilerDisease() {
+                if (!broilerCurrentFile) return;
+
+                broilerLoading.style.display = 'flex';
+                analyzeBroilerBtn.disabled = true;
+
+                const formData = new FormData();
+                formData.append('image', broilerCurrentFile);
+
+                try {
+                    console.log('Sending broiler disease analysis request...');
+                    
+                    // Try the main endpoint first, fallback to mock if needed
+                    let response = await fetch('/analyze-broiler-disease', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    // If main endpoint fails, try mock endpoint
+                    if (!response.ok) {
+                        console.log('Main endpoint failed, trying mock endpoint...');
+                        response = await fetch('/analyze-broiler-disease-mock', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('Broiler disease analysis result:', result);
+
+                    if (result.success) {
+                        displayBroilerResults(result);
+                        showSuccessMessage(result.message || 'Broiler disease analysis completed!');
+                    } else {
+                        throw new Error(result.error || 'Analysis failed');
+                    }
+                } catch (error) {
+                    console.error('Broiler disease analysis error:', error);
+                    showErrorMessage('Broiler disease analysis failed: ' + error.message);
+                } finally {
+                    broilerLoading.style.display = 'none';
+                    analyzeBroilerBtn.disabled = false;
+                }
+            }
+
+            async function analyzeFecal() {
+                if (!fecalCurrentFile) return;
+
+                fecalLoading.style.display = 'flex';
+                analyzeFecalBtn.disabled = true;
+
+                const formData = new FormData();
+                formData.append('image', fecalCurrentFile);
+
+                try {
+                    console.log('Sending fecal analysis request...');
+                    
+                    let response = await fetch('/analyze-fecal-disease', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    // If main endpoint fails, try mock endpoint
+                    if (!response.ok) {
+                        console.log('Main fecal endpoint failed, trying mock endpoint...');
+                        response = await fetch('/analyze-fecal-disease-mock', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('Fecal analysis result:', result);
+
+                    if (result.success) {
+                        displayFecalResults(result);
+                        showSuccessMessage(result.message || 'Fecal analysis completed!');
+                    } else {
+                        throw new Error(result.error || 'Analysis failed');
+                    }
+                } catch (error) {
+                    console.error('Fecal analysis error:', error);
+                    showErrorMessage('Fecal analysis failed: ' + error.message);
+                } finally {
+                    fecalLoading.style.display = 'none';
+                    analyzeFecalBtn.disabled = false;
+                }
+            }
+
+            function displayBroilerResults(result) {
+                // Update diagnosis information
+                const diseaseName = document.getElementById('disease-name');
+                if (result.diagnosis_ar) {
+                    diseaseName.innerHTML = `${result.diagnosis} <span style="color: #666; font-size: 0.9em;">(${result.diagnosis_ar})</span>`;
+                } else {
+                    diseaseName.textContent = result.diagnosis;
+                }
+                
+                const diseaseDesc = document.getElementById('disease-description');
+                if (result.description_ar) {
+                    diseaseDesc.innerHTML = `${result.description}<br><span style="color: #666; font-size: 0.9em;">${result.description_ar}</span>`;
+                } else {
+                    diseaseDesc.textContent = result.description;
+                }
+                
+                // Update confidence
+                const confidencePercent = Math.round(result.confidence * 100);
+                document.getElementById('confidence-badge').textContent = confidencePercent + '%';
+                document.getElementById('confidence-fill').style.width = confidencePercent + '%';
+                document.getElementById('confidence-text').textContent = 'Confidence: ' + confidencePercent + '%';
+                
+                // Update symptoms list
+                const symptomsList = document.getElementById('symptoms-list');
+                symptomsList.innerHTML = '';
+                if (result.symptoms && result.symptoms.length > 0) {
+                    result.symptoms.forEach((symptom, index) => {
+                        const li = document.createElement('li');
+                        if (result.symptoms_ar && result.symptoms_ar[index]) {
+                            li.innerHTML = `${symptom} <span style="color: #666;">(${result.symptoms_ar[index]})</span>`;
+                        } else {
+                            li.textContent = symptom;
+                        }
+                        symptomsList.appendChild(li);
+                    });
+                }
+                
+                // Update treatment recommendations
+                const recommendationsList = document.getElementById('recommendations-list');
+                recommendationsList.innerHTML = '';
+                const treatmentDetails = document.getElementById('treatment-details');
+                
+                if (result.treatment && result.treatment.length > 0) {
+                    // Check if treatment is array of objects (detailed) or strings (simple)
+                    if (typeof result.treatment[0] === 'object') {
+                        // Detailed treatment with doses
+                        recommendationsList.innerHTML = '';
+                        result.treatment.forEach((treatment, index) => {
+                            const treatmentDiv = document.createElement('div');
+                            treatmentDiv.className = 'treatment-item';
+                            
+                            let treatmentHtml = `<strong>${treatment.name || 'Treatment'}</strong>`;
+                            if (treatment.dose) {
+                                treatmentHtml += `<br>Dose: ${treatment.dose}`;
+                            }
+                            if (treatment.method) {
+                                treatmentHtml += `<br>Method: ${treatment.method}`;
+                            }
+                            if (treatment.duration) {
+                                treatmentHtml += `<br>Duration: ${treatment.duration}`;
+                            }
+                            if (treatment.description) {
+                                treatmentHtml += `<br>${treatment.description}`;
+                            }
+                            
+                            // Add Arabic if available
+                            if (result.treatment_ar && result.treatment_ar[index]) {
+                                const arTreatment = result.treatment_ar[index];
+                                treatmentHtml += `<br><span style="color: #666; font-size: 0.9em;">`;
+                                treatmentHtml += `<strong>${arTreatment.name || ''}</strong>`;
+                                if (arTreatment.dose) {
+                                    treatmentHtml += ` - الجرعة: ${arTreatment.dose}`;
+                                }
+                                if (arTreatment.method) {
+                                    treatmentHtml += ` - طريقة: ${arTreatment.method}`;
+                                }
+                                if (arTreatment.duration) {
+                                    treatmentHtml += ` - المدة: ${arTreatment.duration}`;
+                                }
+                                if (arTreatment.description) {
+                                    treatmentHtml += ` - ${arTreatment.description}`;
+                                }
+                                treatmentHtml += `</span>`;
+                            }
+                            
+                            treatmentDiv.innerHTML = treatmentHtml;
+                            recommendationsList.appendChild(treatmentDiv);
+                        });
+                    } else {
+                        // Simple treatment list
+                        result.treatment.forEach((treatment, index) => {
+                            const li = document.createElement('li');
+                            if (result.treatment_ar && result.treatment_ar[index]) {
+                                li.innerHTML = `${treatment} <span style="color: #666;">(${result.treatment_ar[index]})</span>`;
+                            } else {
+                                li.textContent = treatment;
+                            }
+                            recommendationsList.appendChild(li);
+                        });
+                    }
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = 'No treatment recommendations available';
+                    recommendationsList.appendChild(li);
+                }
+                
+                // Display additional information
+                const additionalInfo = document.getElementById('additional-info');
+                const additionalDetails = document.getElementById('additional-details');
+                let hasAdditional = false;
+                let additionalHtml = '';
+                
+                if (result.causative_agent) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Causative Agent:</strong> ${result.causative_agent}`;
+                    if (result.causative_agent_ar) {
+                        additionalHtml += ` <span style="color: #666;">(${result.causative_agent_ar})</span>`;
+                    }
+                    additionalHtml += `</p>`;
+                }
+                
+                if (result.age_at_risk) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Age at Risk:</strong> ${result.age_at_risk}`;
+                    if (result.age_at_risk_ar) {
+                        additionalHtml += ` <span style="color: #666;">(${result.age_at_risk_ar})</span>`;
+                    }
+                    additionalHtml += `</p>`;
+                }
+                
+                if (result.lesions) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Lesions:</strong> ${result.lesions}`;
+                    if (result.lesions_ar) {
+                        additionalHtml += ` <span style="color: #666;">(${result.lesions_ar})</span>`;
+                    }
+                    additionalHtml += `</p>`;
+                }
+                
+                if (result.infection_sources && result.infection_sources.length > 0) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Infection Sources:</strong></p><ul>`;
+                    result.infection_sources.forEach((source, idx) => {
+                        additionalHtml += `<li>${source}`;
+                        if (result.infection_sources_ar && result.infection_sources_ar[idx]) {
+                            additionalHtml += ` <span style="color: #666;">(${result.infection_sources_ar[idx]})</span>`;
+                        }
+                        additionalHtml += `</li>`;
+                    });
+                    additionalHtml += `</ul>`;
+                }
+                
+                if (result.droppings) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Droppings:</strong> ${result.droppings}`;
+                    if (result.droppings_ar) {
+                        additionalHtml += ` <span style="color: #666;">(${result.droppings_ar})</span>`;
+                    }
+                    additionalHtml += `</p>`;
+                }
+                
+                if (hasAdditional) {
+                    additionalDetails.innerHTML = additionalHtml;
+                    additionalInfo.style.display = 'block';
+                } else {
+                    additionalInfo.style.display = 'none';
+                }
+                
+                // Show annotated image
+                const outputImage = document.getElementById('broiler-output-image');
+                const placeholder = document.getElementById('broiler-visualization-placeholder');
+                
+                if (result.annotated_image) {
+                    const timestamp = new Date().getTime();
+                    outputImage.src = result.annotated_image + '?t=' + timestamp;
+                    outputImage.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    
+                    outputImage.onload = function() {
+                        console.log('Broiler output image loaded successfully');
+                    };
+                    outputImage.onerror = function() {
+                        console.error('Failed to load broiler output image');
+                        outputImage.style.display = 'none';
+                        placeholder.style.display = 'flex';
+                    };
+                }
+                
+                // Show prevention section if available
+                const preventionSection = document.getElementById('broiler-prevention-section');
+                const preventionList = document.getElementById('broiler-prevention-list');
+                if (preventionSection && preventionList && result.prevention && result.prevention.length > 0) {
+                    preventionList.innerHTML = '';
+                    result.prevention.forEach((measure, index) => {
+                        const li = document.createElement('li');
+                        if (result.prevention_ar && result.prevention_ar[index]) {
+                            li.innerHTML = `${measure} <span style="color: #666;">(${result.prevention_ar[index]})</span>`;
+                        } else {
+                            li.textContent = measure;
+                        }
+                        preventionList.appendChild(li);
+                    });
+                    preventionSection.style.display = 'block';
+                }
+                
+                // Show medication guidelines
+                const medicationGuidelines = document.getElementById('broiler-medication-guidelines');
+                if (medicationGuidelines) {
+                    medicationGuidelines.style.display = 'block';
+                }
+                
+                // Show download button
+                const downloadBtn = document.getElementById('download-broiler-report');
+                if (downloadBtn) {
+                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.onclick = () => downloadDiseaseReport('broiler', result);
+                }
+                
+                // Show results section
+                broilerResults.style.display = 'block';
+            }
+
+            function displayFecalResults(result) {
+                console.log('Displaying fecal results:', result);
+                
+                // Update diagnosis information
+                const fecalDiseaseName = document.getElementById('fecal-disease-name');
+                if (result.diagnosis_ar) {
+                    fecalDiseaseName.innerHTML = `${result.diagnosis} <span style="color: #666; font-size: 0.9em;">(${result.diagnosis_ar})</span>`;
+                } else {
+                    fecalDiseaseName.textContent = result.diagnosis;
+                }
+                
+                const fecalDiseaseDesc = document.getElementById('fecal-disease-description');
+                if (result.description_ar) {
+                    fecalDiseaseDesc.innerHTML = `${result.description}<br><span style="color: #666; font-size: 0.9em;">${result.description_ar}</span>`;
+                } else {
+                    fecalDiseaseDesc.textContent = result.description;
+                }
+                
+                // Update confidence
+                const confidencePercent = Math.round(result.confidence * 100);
+                document.getElementById('fecal-confidence-badge').textContent = confidencePercent + '%';
+                document.getElementById('fecal-confidence-fill').style.width = confidencePercent + '%';
+                document.getElementById('fecal-confidence-text').textContent = 'Confidence: ' + confidencePercent + '%';
+                
+                // Update symptoms list
+                const symptomsList = document.getElementById('fecal-symptoms-list');
+                if (symptomsList) {
+                    symptomsList.innerHTML = '';
+                    if (result.symptoms && result.symptoms.length > 0) {
+                        result.symptoms.forEach((symptom, index) => {
+                            const li = document.createElement('li');
+                            if (result.symptoms_ar && result.symptoms_ar[index]) {
+                                li.innerHTML = `${symptom} <span style="color: #666;">(${result.symptoms_ar[index]})</span>`;
+                            } else {
+                                li.textContent = symptom;
+                            }
+                            symptomsList.appendChild(li);
+                        });
+                    }
+                }
+                
+                // Update treatment recommendations
+                const recommendationsList = document.getElementById('fecal-recommendations-list');
+                if (recommendationsList) {
+                    recommendationsList.innerHTML = '';
+                    if (result.treatment && result.treatment.length > 0) {
+                        // Check if treatment is array of objects (detailed) or strings (simple)
+                        if (typeof result.treatment[0] === 'object') {
+                            // Detailed treatment with doses
+                            result.treatment.forEach((treatment, index) => {
+                                const treatmentDiv = document.createElement('div');
+                                treatmentDiv.className = 'treatment-item';
+                                
+                                let treatmentHtml = `<strong>${treatment.name || 'Treatment'}</strong>`;
+                                if (treatment.dose) {
+                                    treatmentHtml += `<br>Dose: ${treatment.dose}`;
+                                }
+                                if (treatment.method) {
+                                    treatmentHtml += `<br>Method: ${treatment.method}`;
+                                }
+                                if (treatment.duration) {
+                                    treatmentHtml += `<br>Duration: ${treatment.duration}`;
+                                }
+                                if (treatment.description) {
+                                    treatmentHtml += `<br>${treatment.description}`;
+                                }
+                                
+                                // Add Arabic if available
+                                if (result.treatment_ar && result.treatment_ar[index]) {
+                                    const arTreatment = result.treatment_ar[index];
+                                    treatmentHtml += `<br><span style="color: #666; font-size: 0.9em;">`;
+                                    treatmentHtml += `<strong>${arTreatment.name || ''}</strong>`;
+                                    if (arTreatment.dose) {
+                                        treatmentHtml += ` - الجرعة: ${arTreatment.dose}`;
+                                    }
+                                    if (arTreatment.method) {
+                                        treatmentHtml += ` - طريقة: ${arTreatment.method}`;
+                                    }
+                                    if (arTreatment.duration) {
+                                        treatmentHtml += ` - المدة: ${arTreatment.duration}`;
+                                    }
+                                    if (arTreatment.description) {
+                                        treatmentHtml += ` - ${arTreatment.description}`;
+                                    }
+                                    treatmentHtml += `</span>`;
+                                }
+                                
+                                treatmentDiv.innerHTML = treatmentHtml;
+                                recommendationsList.appendChild(treatmentDiv);
+                            });
+                        } else {
+                            // Simple treatment list
+                            result.treatment.forEach((treatment, index) => {
+                                const li = document.createElement('li');
+                                if (result.treatment_ar && result.treatment_ar[index]) {
+                                    li.innerHTML = `${treatment} <span style="color: #666;">(${result.treatment_ar[index]})</span>`;
+                                } else {
+                                    li.textContent = treatment;
+                                }
+                                recommendationsList.appendChild(li);
+                            });
+                        }
+                    }
+                }
+                
+                // Update prevention measures
+                const preventionSection = document.getElementById('fecal-prevention-section');
+                const preventionList = document.getElementById('fecal-prevention-list');
+                if (preventionSection && preventionList) {
+                    preventionList.innerHTML = '';
+                    
+                    if (result.prevention && result.prevention.length > 0) {
+                        result.prevention.forEach((measure, index) => {
+                            const li = document.createElement('li');
+                            if (result.prevention_ar && result.prevention_ar[index]) {
+                                li.innerHTML = `${measure} <span style="color: #666;">(${result.prevention_ar[index]})</span>`;
+                            } else {
+                                li.textContent = measure;
+                            }
+                            preventionList.appendChild(li);
+                        });
+                        preventionSection.style.display = 'block';
+                    } else {
+                        preventionSection.style.display = 'none';
+                    }
+                }
+                
+                // Display additional information
+                const additionalInfo = document.getElementById('fecal-additional-info');
+                const additionalDetails = document.getElementById('fecal-additional-details');
+                let hasAdditional = false;
+                let additionalHtml = '';
+                
+                if (result.causative_agent) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Causative Agent:</strong> ${result.causative_agent}`;
+                    if (result.causative_agent_ar) {
+                        additionalHtml += ` <span style="color: #666;">(${result.causative_agent_ar})</span>`;
+                    }
+                    additionalHtml += `</p>`;
+                }
+                
+                if (result.age_at_risk) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Age at Risk:</strong> ${result.age_at_risk}`;
+                    if (result.age_at_risk_ar) {
+                        additionalHtml += ` <span style="color: #666;">(${result.age_at_risk_ar})</span>`;
+                    }
+                    additionalHtml += `</p>`;
+                }
+                
+                if (result.lesions) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Lesions:</strong> ${result.lesions}`;
+                    if (result.lesions_ar) {
+                        additionalHtml += ` <span style="color: #666;">(${result.lesions_ar})</span>`;
+                    }
+                    additionalHtml += `</p>`;
+                }
+                
+                if (result.infection_sources && result.infection_sources.length > 0) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Infection Sources:</strong></p><ul>`;
+                    result.infection_sources.forEach((source, idx) => {
+                        additionalHtml += `<li>${source}`;
+                        if (result.infection_sources_ar && result.infection_sources_ar[idx]) {
+                            additionalHtml += ` <span style="color: #666;">(${result.infection_sources_ar[idx]})</span>`;
+                        }
+                        additionalHtml += `</li>`;
+                    });
+                    additionalHtml += `</ul>`;
+                }
+                
+                if (result.droppings) {
+                    hasAdditional = true;
+                    additionalHtml += `<p><strong>Droppings:</strong> ${result.droppings}`;
+                    if (result.droppings_ar) {
+                        additionalHtml += ` <span style="color: #666;">(${result.droppings_ar})</span>`;
+                    }
+                    additionalHtml += `</p>`;
+                }
+                
+                if (hasAdditional) {
+                    additionalDetails.innerHTML = additionalHtml;
+                    additionalInfo.style.display = 'block';
+                } else {
+                    additionalInfo.style.display = 'none';
+                }
+                
+                // Show annotated image
+                const outputImage = document.getElementById('fecal-output-image');
+                const placeholder = document.getElementById('fecal-visualization-placeholder');
+                
+                if (outputImage && placeholder) {
+                    if (result.annotated_image) {
+                        const timestamp = new Date().getTime();
+                        outputImage.src = result.annotated_image + '?t=' + timestamp;
+                        outputImage.style.display = 'block';
+                        placeholder.style.display = 'none';
+                        
+                        outputImage.onload = function() {
+                            console.log('Fecal output image loaded successfully');
+                        };
+                        outputImage.onerror = function() {
+                            console.error('Failed to load fecal output image');
+                            outputImage.style.display = 'none';
+                            placeholder.style.display = 'flex';
+                        };
+                    } else {
+                        outputImage.style.display = 'none';
+                        placeholder.style.display = 'flex';
+                    }
+                }
+                
+                // Show medication guidelines
+                const medicationGuidelines = document.getElementById('fecal-medication-guidelines');
+                if (medicationGuidelines) {
+                    medicationGuidelines.style.display = 'block';
+                }
+                
+                // Show download button
+                const downloadBtn = document.getElementById('download-fecal-report');
+                if (downloadBtn) {
+                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.onclick = () => downloadDiseaseReport('fecal', result);
+                }
+                
+                // Show results section
+                if (fecalResults) {
+                    fecalResults.style.display = 'block';
+                }
+            }
+            
+            function downloadDiseaseReport(type, result) {
+                // Create report content
+                let reportContent = `DISEASE DETECTION REPORT\n`;
+                reportContent += `================================\n\n`;
+                reportContent += `Type: ${type === 'broiler' ? 'Broiler Disease Detection' : 'Fecal Analysis'}\n`;
+                reportContent += `Date: ${new Date().toLocaleString()}\n\n`;
+                reportContent += `DIAGNOSIS\n`;
+                reportContent += `---------\n`;
+                reportContent += `Disease: ${result.diagnosis || 'Unknown'}\n`;
+                if (result.diagnosis_ar) {
+                    reportContent += `(${result.diagnosis_ar})\n`;
+                }
+                reportContent += `Confidence: ${(result.confidence * 100).toFixed(1)}%\n\n`;
+                
+                if (result.description) {
+                    reportContent += `DESCRIPTION\n`;
+                    reportContent += `-----------\n`;
+                    reportContent += `${result.description}\n`;
+                    if (result.description_ar) {
+                        reportContent += `${result.description_ar}\n`;
+                    }
+                    reportContent += `\n`;
+                }
+                
+                if (result.symptoms && result.symptoms.length > 0) {
+                    reportContent += `SYMPTOMS\n`;
+                    reportContent += `--------\n`;
+                    result.symptoms.forEach((symptom, index) => {
+                        reportContent += `${index + 1}. ${symptom}`;
+                        if (result.symptoms_ar && result.symptoms_ar[index]) {
+                            reportContent += ` (${result.symptoms_ar[index]})`;
+                        }
+                        reportContent += `\n`;
+                    });
+                    reportContent += `\n`;
+                }
+                
+                if (result.treatment && result.treatment.length > 0) {
+                    reportContent += `RECOMMENDED TREATMENT\n`;
+                    reportContent += `----------------------\n`;
+                    result.treatment.forEach((treatment, index) => {
+                        if (typeof treatment === 'object') {
+                            reportContent += `${index + 1}. ${treatment.name || 'Treatment'}\n`;
+                            if (treatment.dose) reportContent += `   Dose: ${treatment.dose}\n`;
+                            if (treatment.method) reportContent += `   Method: ${treatment.method}\n`;
+                            if (treatment.duration) reportContent += `   Duration: ${treatment.duration}\n`;
+                            if (treatment.description) reportContent += `   ${treatment.description}\n`;
+                            if (result.treatment_ar && result.treatment_ar[index]) {
+                                const ar = result.treatment_ar[index];
+                                reportContent += `   (${ar.name || ''}`;
+                                if (ar.dose) reportContent += ` - الجرعة: ${ar.dose}`;
+                                if (ar.method) reportContent += ` - طريقة: ${ar.method}`;
+                                if (ar.duration) reportContent += ` - المدة: ${ar.duration}`;
+                                if (ar.description) reportContent += ` - ${ar.description}`;
+                                reportContent += `)\n`;
+                            }
+                        } else {
+                            reportContent += `${index + 1}. ${treatment}`;
+                            if (result.treatment_ar && result.treatment_ar[index]) {
+                                reportContent += ` (${result.treatment_ar[index]})`;
+                            }
+                            reportContent += `\n`;
+                        }
+                    });
+                    reportContent += `\n`;
+                }
+                
+                if (result.prevention && result.prevention.length > 0) {
+                    reportContent += `PREVENTION MEASURES\n`;
+                    reportContent += `------------------\n`;
+                    result.prevention.forEach((measure, index) => {
+                        reportContent += `${index + 1}. ${measure}`;
+                        if (result.prevention_ar && result.prevention_ar[index]) {
+                            reportContent += ` (${result.prevention_ar[index]})`;
+                        }
+                        reportContent += `\n`;
+                    });
+                    reportContent += `\n`;
+                }
+                
+                // Add medication guidelines
+                reportContent += `\n================================\n`;
+                reportContent += `ملخص عام للجرعات والإدارة\n`;
+                reportContent += `================================\n\n`;
+                
+                reportContent += `قواعد عامة لإعطاء الأدوية:\n`;
+                reportContent += `- حساب الجرعة: بناءً على وزن الطيور أو كمية الماء المتوقع استهلاكها\n`;
+                reportContent += `- وقت الإعطاء: في الصباح الباكر مع الماء النظيف\n`;
+                reportContent += `- فترة العلاج: 3-7 أيام حسب شدة المرض\n`;
+                reportContent += `- فترة السحب: مراعاة فترة سحب الأدوية قبل الذبح\n\n`;
+                
+                reportContent += `بروتوكول الطوارئ:\n`;
+                reportContent += `- التشخيص المبكر: مراقبة الأعراض اليومية\n`;
+                reportContent += `- العزل الفوري: فصل الطيور المريضة\n`;
+                reportContent += `- العلاج الجماعي: إعطاء العلاج للقطيع كاملاً في الأمراض المعدية\n`;
+                reportContent += `- التطهير: تنظيف وتطهير الحظيرة والمعدات\n\n`;
+                
+                reportContent += `الوقاية خير من العلاج:\n`;
+                reportContent += `✅ برنامج تحصين منتظم\n`;
+                reportContent += `✅ نظافة وتطهير دوري\n`;
+                reportContent += `✅ تهوية جيدة وكثافة مناسبة\n`;
+                reportContent += `✅ تغذية متوازنة وماء نظيف\n`;
+                reportContent += `✅ إدارة الإجهاد وتجنب العوامل المسببة له\n\n`;
+                
+                reportContent += `🚨 تحذيرات مهمة:\n`;
+                reportContent += `- استشارة البيطري: ضرورية قبل بدء أي برنامج علاجي\n`;
+                reportContent += `- الالتزام بالجرعات: تجنب زيادة الجرعات دون استشارة\n`;
+                reportContent += `- فترات السحب: ضرورية لمنع بقايا الأدوية في اللحم والبيض\n`;
+                reportContent += `- تسجيل العلاج: توثيق جميع العلاجات المستخدمة\n`;
+                reportContent += `- مراقبة الاستجابة: تقييم فعالية العلاج بعد 48-72 ساعة\n`;
+                
+                // Create and download file
+                const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${type}_disease_report_${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function showSuccessMessage(message) {
+                const successDiv = document.createElement('div');
+                successDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 5px;
+                    z-index: 1000;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                `;
+                successDiv.textContent = message;
+                document.body.appendChild(successDiv);
+                
+                setTimeout(() => {
+                    if (document.body.contains(successDiv)) {
+                        document.body.removeChild(successDiv);
+                    }
+                }, 3000);
+            }
+
+            function showErrorMessage(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background-color: #f44336;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 5px;
+                    z-index: 1000;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                `;
+                errorDiv.textContent = message;
+                document.body.appendChild(errorDiv);
+                
+                setTimeout(() => {
+                    if (document.body.contains(errorDiv)) {
+                        document.body.removeChild(errorDiv);
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

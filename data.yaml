@@ -1,0 +1,85 @@
+names:
+- 1010 -gm-
+- 120 -gm-
+- 1220 -gm-
+- 1240 -gm-
+- 1250 -gm-
+- 1290 -gm-
+- 1310 -gm-
+- 140 -gm-
+- 1450 -gm-
+- 1480 -gm-
+- 1490 -gm-
+- 150 -gm-
+- 1540 -gm-
+- 1550 -gm-
+- 1550 gm
+- 1570 -gm-
+- 1580 -gm-
+- 160 -gm-
+- 1600 -gm-
+- 1690 -gm-
+- 170 -gm-
+- 1780 -gm-
+- 180 -gm-
+- 190 -gm-
+- 1990 -gm-
+- 200 -gm-
+- 2090 -gm-
+- 210 -gm-
+- 220 -gm-
+- 230 -gm-
+- 240 -gm-
+- 270 -gm-
+- 280 -gm-
+- 290 -gm-
+- 300 -gm-
+- 320 -gm-
+- 330 -gm-
+- 340 -gm-
+- 350 -gm-
+- 360 -gm-
+- 370 -gm-
+- 380 -gm-
+- 390 -gm-
+- 400 -gm-
+- 410 -gm-
+- 420 -gm-
+- 430 -gm-
+- 440 -gm-
+- 450 -gm-
+- 460 -gm-
+- 490 -gm-
+- 500-gm-
+- 510-gm-
+- 520-gm-
+- 530-gm-
+- 540-gm-
+- 550-gm-
+- 560-gm-
+- 570-gm-
+- 580-gm-
+- 590 -gm-
+- 600 -gm-
+- 610 -gm-
+- 620 -gm-
+- 630 -gm-
+- 640 -gm-
+- 650 -gm-
+- 670 -gm-
+- 680 -gm-
+- 700 -gm-
+- 720 -gm-
+- 750 -gm-
+- 800 -gm-
+nc: 73
+path: F:\lastweight
+roboflow:
+  license: CC BY 4.0
+  project: broiler-live-weight-by-semantic-segmentation
+  url: https://universe.roboflow.com/mohamed-f-abdelshafie-yxuwl/broiler-live-weight-by-semantic-segmentation/dataset/14
+  version: 14
+  workspace: mohamed-f-abdelshafie-yxuwl
+test: test/images
+train: train/images
+val: valid/images

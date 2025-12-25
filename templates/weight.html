@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weight Estimation - Poultry Monitoring System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-kiwi-bird"></i>
+                <span>Poultry Monitor</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li class="nav-item"><a href="/disease" class="nav-link">Disease Detection</a></li>
+                <li class="nav-item"><a href="/weight" class="nav-link active">Weight Estimation</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="page-header">
+            <h1>Weight Estimation</h1>
+            <p>Estimate chicken weight from images</p>
+        </div>
+
+        <section class="upload-section">
+            <div class="upload-card">
+                <h2>Upload Chicken Media</h2>
+                <p>Upload a clear image or video of a chicken for weight estimation</p>
+                
+                <div class="upload-options" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="upload-option" style="flex: 1; text-align: center; padding: 1.5rem; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;" id="image-option">
+                        <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 0.5rem; color: #4CAF50;"></i>
+                        <p>Upload Image</p>
+                        <input type="file" id="weight-file" accept="image/*" style="display: none;">
+                    </div>
+                    <div class="upload-option" style="flex: 1; text-align: center; padding: 1.5rem; border: 2px dashed #ccc; border-radius: 8px; cursor: pointer;" id="video-option">
+                        <i class="fas fa-video" style="font-size: 2rem; margin-bottom: 0.5rem; color: #2196F3;"></i>
+                        <p>Upload Video</p>
+                        <input type="file" id="weight-video-file" accept="video/*" style="display: none;">
+                    </div>
+                </div>
+                
+                <div class="selected-file" id="weight-selected-file" style="margin: 1rem 0;">
+                    <span>No file selected</span>
+                </div>
+                
+                <div id="media-preview" style="margin: 1rem 0; text-align: center;">
+                    <!-- Preview will be shown here -->
+                </div>
+                
+                <button class="btn btn-primary" id="estimate-weight" disabled style="width: 100%; padding: 0.8rem; font-size: 1rem;">
+                    <i class="fas fa-weight-scale"></i> Estimate Weight
+                </button>
+                
+                <div class="loading-spinner" id="weight-loading" style="display: none; margin-top: 1rem; justify-content: center; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span id="loading-text">Analyzing media and estimating weight...</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="results-section" id="weight-results-section" style="display: none;">
+            <h2>Weight Estimation Results</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: flex-start; margin-bottom: 2rem;">
+                <!-- Weight Card -->
+                <div class="weight-card" style="flex: 0 0 300px; text-align: center; padding: 1.5rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 1rem;">
+                    <div class="weight-icon" style="font-size: 2.5rem; color: #4CAF50; margin-bottom: 1rem;">
+                        <i class="fas fa-weight-scale"></i>
+                    </div>
+                    <h3 style="margin: 0.5rem 0; color: #333;">Average Weight</h3>
+                    <div class="weight-value" id="weight-value" style="font-size: 2rem; font-weight: bold; color: #2196F3; margin: 1rem 0;">0g</div>
+                    <p id="weight-detected-count" style="margin: 0.5rem 0; color: #666; font-size: 1.1rem;">Based on visual analysis</p>
+                </div>
+                
+                <!-- Image Container -->
+                <div style="flex: 1; min-width: 300px;">
+                    <div class="weight-image-container">
+                        <h3>Annotated Image</h3>
+                        <div class="result-image-wrapper">
+                            <img id="weight-annotated-image" src="" alt="Annotated image with weight predictions" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="broiler-details" id="broiler-details" style="margin-top: 2rem; display: none;">
+                <h3>Individual Broiler Details</h3>
+                <div id="broiler-list" class="broiler-list"></div>
+            </div>
+        </section>
+
+
+        <section class="history-section">
+            <h2>Weight History</h2>
+            <div class="history-card">
+                <div class="history-placeholder">
+                    <i class="fas fa-chart-line"></i>
+                    <p>Weight tracking chart will appear here</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2023 Poultry Monitoring System. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

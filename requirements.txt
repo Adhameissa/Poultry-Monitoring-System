@@ -1,0 +1,17 @@
+flask==2.3.3
+flask-cors==4.0.0
+opencv-python==4.8.1.78
+ultralytics==8.0.203
+numpy==1.24.4
+scipy==1.11.3
+matplotlib==3.7.2
+pillow==10.0.0
+torch==2.0.1
+torchvision==0.15.2
+scikit-image==0.21.0
+python-dotenv==1.0.0
+tqdm==4.66.1
+requests==2.31.0
+python-multipart==0.0.6
+werkzeug==2.3.7
+gunicorn==21.2.0

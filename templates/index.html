@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poultry Monitoring System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-kiwi-bird"></i>
+                <span>Poultry Monitor</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="/" class="nav-link active">Home</a></li>
+                <li class="nav-item"><a href="/dashboard" class="nav-link">Dashboard</a></li>
+                <li class="nav-item"><a href="/disease" class="nav-link">Disease Detection</a></li>
+                <li class="nav-item"><a href="/weight" class="nav-link">Weight Estimation</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Poultry Monitoring System</h1>
+                <p>Advanced AI-powered monitoring for healthier poultry farms</p>
+                <div class="hero-buttons">
+                    <a href="/dashboard" class="btn btn-primary">Get Started</a>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="image-placeholder">
+                    <i class="fas fa-kiwi-bird"></i>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <h2>Our Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Dashboard Analytics</h3>
+                    <p>Monitor chicken count and health status in real-time with our comprehensive dashboard.</p>
+                    <a href="/dashboard" class="feature-link">View Dashboard <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-virus"></i>
+                    </div>
+                    <h3>Disease Detection</h3>
+                    <p>Detect diseases in broiler chickens and through fecal analysis with AI models.</p>
+                    <a href="/disease" class="feature-link">Detect Diseases <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-weight-scale"></i>
+                    </div>
+                    <h3>Weight Estimation</h3>
+                    <p>Estimate chicken weight from images with our trained computer vision model.</p>
+                    <a href="/weight" class="feature-link">Estimate Weight <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2023 Poultry Monitoring System. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

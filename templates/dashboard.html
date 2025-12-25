@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Poultry Monitoring System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-kiwi-bird"></i>
+                <span>Poultry Monitor</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="/dashboard" class="nav-link active">Dashboard</a></li>
+                <li class="nav-item"><a href="/disease" class="nav-link">Disease Detection</a></li>
+                <li class="nav-item"><a href="/weight" class="nav-link">Weight Estimation</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="page-header">
+            <h1>Dashboard</h1>
+            <p>Monitor chicken count and health status</p>
+        </div>
+
+        <section class="upload-section">
+            <div class="upload-card">
+                <h2>Upload Media</h2>
+                <p>Upload a photo or video to analyze your poultry</p>
+                <div class="upload-options">
+                    <div class="upload-option" id="photo-option">
+                        <i class="fas fa-image"></i>
+                        <span>Upload Photo</span>
+                        <input type="file" id="photo-upload" accept="image/*" hidden>
+                    </div>
+                    <div class="upload-option" id="video-option">
+                        <i class="fas fa-video"></i>
+                        <span>Upload Video</span>
+                        <input type="file" id="video-upload" accept="video/*" hidden>
+                    </div>
+                </div>
+                <div class="selected-file" id="selected-file">
+                    <span>No file selected</span>
+                </div>
+                <div class="analysis-buttons">
+                    <button class="btn btn-primary" id="analyze-btn" disabled>Analyze</button>
+                    <button class="btn btn-secondary" id="generate-heatmap-btn" style="display: none;">Generate Heatmap</button>
+                </div>
+                <div class="loading-spinner" id="loading-spinner" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Analyzing...</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="results-section" id="results-section" style="display: none;">
+            <h2>Analysis Results</h2>
+            <div class="results-grid">
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-chicken"></i>
+                    </div>
+                    <h3>Chicken Count</h3>
+                    <div class="result-value" id="total-count">0</div>
+                    <p>Total chickens detected</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-heart-pulse"></i>
+                    </div>
+                    <h3>Health Status</h3>
+                    <div class="result-value" id="health-status">Unknown</div>
+                    <p>Overall flock health</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Healthy Chickens</h3>
+                    <div class="result-value" id="healthy-count">0</div>
+                    <p>Number of healthy chickens</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Unhealthy Chickens</h3>
+                    <div class="result-value" id="unhealthy-count">0</div>
+                    <p>Number requiring attention</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="visualization-section" id="visualization-section" style="display: none;">
+            <h2>Visualization</h2>
+            <div class="visualization-card">
+                <div class="image-preview">
+                    <img id="output-image" src="" alt="Analysis Result" style="display: none; max-width: 100%; border-radius: 8px;">
+                    <video id="output-video" controls style="display: none; max-width: 100%; border-radius: 8px;"></video>
+                    <img id="heatmap-image" src="" alt="Heatmap" style="display: none; max-width: 100%; border-radius: 8px;">
+                    <div class="visualization-placeholder" id="visualization-placeholder">
+                        <i class="fas fa-chart-bar"></i>
+                        <p>Analysis visualization will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2023 Poultry Monitoring System. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+    // Enhanced JavaScript for model integration
+    document.addEventListener('DOMContentLoaded', function() {
+        const photoUpload = document.getElementById('photo-upload');
+        const videoUpload = document.getElementById('video-upload');
+        const photoOption = document.getElementById('photo-option');
+        const videoOption = document.getElementById('video-option');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const generateHeatmapBtn = document.getElementById('generate-heatmap-btn');
+        const selectedFileDiv = document.getElementById('selected-file');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultsSection = document.getElementById('results-section');
+        const visualizationSection = document.getElementById('visualization-section');
+        
+        let currentFile = null;
+        let currentFileType = null;
+
+        // File upload handlers
+        photoOption.addEventListener('click', () => {
+            photoUpload.click();
+        });
+
+        videoOption.addEventListener('click', () => {
+            videoUpload.click();
+        });
+
+        photoUpload.addEventListener('change', handleFileSelect);
+        videoUpload.addEventListener('change', handleFileSelect);
+
+        analyzeBtn.addEventListener('click', analyzeMedia);
+        generateHeatmapBtn.addEventListener('click', generateHeatmap);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentFile = file;
+                currentFileType = file.type.split('/')[0]; // 'image' or 'video'
+                
+                // Clear other file input
+                if (currentFileType === 'image') {
+                    videoUpload.value = '';
+                } else {
+                    photoUpload.value = '';
+                }
+                
+                selectedFileDiv.innerHTML = `<span>Selected: ${file.name}</span>`;
+                analyzeBtn.disabled = false;
+                generateHeatmapBtn.style.display = currentFileType === 'video' ? 'inline-block' : 'none';
+                
+                // Reset previous results
+                resetResults();
+            }
+        }
+
+        function resetResults() {
+            resultsSection.style.display = 'none';
+            visualizationSection.style.display = 'none';
+            document.getElementById('output-image').style.display = 'none';
+            document.getElementById('output-video').style.display = 'none';
+            document.getElementById('heatmap-image').style.display = 'none';
+            document.getElementById('visualization-placeholder').style.display = 'flex';
+        }
+
+        async function analyzeMedia() {
+            if (!currentFile) return;
+
+            loadingSpinner.style.display = 'flex';
+            analyzeBtn.disabled = true;
+
+            const formData = new FormData();
+            const endpoint = currentFileType === 'image' ? '/analyze-image' : '/analyze-video';
+            const fileFieldName = currentFileType === 'image' ? 'image' : 'video';
+            formData.append(fileFieldName, currentFile);
+
+            try {
+                console.log('Sending request to:', endpoint);
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Analysis result:', result);
+
+                if (result.success) {
+                    displayResults(result);
+                    showSuccessMessage('Analysis completed successfully!');
+                } else {
+                    throw new Error(result.error || 'Analysis failed');
+                }
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showErrorMessage('Analysis failed: ' + error.message);
+            } finally {
+                loadingSpinner.style.display = 'none';
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function displayResults(result) {
+            // Update result cards
+            const totalCount = result.total_count || (result.healthy_count + result.unhealthy_count) || 0;
+            const healthyCount = result.healthy_count || 0;
+            const unhealthyCount = result.unhealthy_count || 0;
+            
+            console.log('Displaying results:', { totalCount, healthyCount, unhealthyCount });
+            
+            document.getElementById('total-count').textContent = totalCount;
+            document.getElementById('healthy-count').textContent = healthyCount;
+            document.getElementById('unhealthy-count').textContent = unhealthyCount;
+            
+            // Determine overall health status
+            let healthStatus = 'Unknown';
+            let healthColor = '#795548';
+            
+            if (totalCount > 0) {
+                const healthPercentage = (healthyCount / totalCount) * 100;
+                if (healthPercentage >= 80) {
+                    healthStatus = 'Excellent';
+                    healthColor = '#4CAF50';
+                } else if (healthPercentage >= 60) {
+                    healthStatus = 'Good';
+                    healthColor = '#8BC34A';
+                } else if (healthPercentage >= 40) {
+                    healthStatus = 'Fair';
+                    healthColor = '#FFC107';
+                } else {
+                    healthStatus = 'Poor';
+                    healthColor = '#F44336';
+                }
+            } else {
+                healthStatus = 'No Chickens';
+                healthColor = '#795548';
+            }
+            
+            document.getElementById('health-status').textContent = healthStatus;
+            document.getElementById('health-status').style.color = healthColor;
+
+            // Show visualization
+            const outputImage = document.getElementById('output-image');
+            const outputVideo = document.getElementById('output-video');
+            const placeholder = document.getElementById('visualization-placeholder');
+
+            if (currentFileType === 'image' && result.output_image) {
+                // Add timestamp to prevent caching
+                const timestamp = new Date().getTime();
+                outputImage.src = result.output_image + '?t=' + timestamp;
+                outputImage.style.display = 'block';
+                outputVideo.style.display = 'none';
+                placeholder.style.display = 'none';
+                
+                // Preload the image to ensure it's loaded
+                outputImage.onload = function() {
+                    console.log('Output image loaded successfully');
+                };
+                outputImage.onerror = function() {
+                    console.error('Failed to load output image');
+                    outputImage.style.display = 'none';
+                    placeholder.style.display = 'flex';
+                };
+            } else if (currentFileType === 'video' && result.annotated_video) {
+                const videoUrl = '/videooutputs/' + result.annotated_video;
+                console.log('Loading video from:', videoUrl);
+                
+                outputVideo.src = videoUrl;
+                outputVideo.style.display = 'block';
+                outputImage.style.display = 'none';
+                document.getElementById('heatmap-image').style.display = 'none';
+                placeholder.style.display = 'none';
+                
+                // Add event listeners for video
+                outputVideo.onloadeddata = function() {
+                    console.log('Output video loaded successfully');
+                    console.log('Video duration:', outputVideo.duration);
+                    console.log('Video dimensions:', outputVideo.videoWidth, 'x', outputVideo.videoHeight);
+                };
+                
+                outputVideo.onerror = function(e) {
+                    console.error('Failed to load output video:', e);
+                    console.error('Video source:', outputVideo.src);
+                    outputVideo.style.display = 'none';
+                    placeholder.style.display = 'flex';
+                    placeholder.innerHTML = `
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Video failed to load. The format might not be supported.</p>
+                        <small>Try using MP4 format for better compatibility</small>
+                    `;
+                };
+                
+                outputVideo.onloadstart = function() {
+                    console.log('Video loading started...');
+                };
+                
+                // Try to play the video to trigger loading
+                outputVideo.load();
+            }
+
+            // Show sections
+            resultsSection.style.display = 'block';
+            visualizationSection.style.display = 'block';
+            
+            // Log detailed results for debugging
+            console.log('Detailed results:', result);
+        }
+
+        async function generateHeatmap() {
+            if (currentFileType !== 'video') return;
+
+            loadingSpinner.style.display = 'flex';
+            generateHeatmapBtn.disabled = true;
+
+            try {
+                const response = await fetch('/generate-heatmap', {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Heatmap result:', result);
+
+                if (result.success) {
+                    const heatmapImage = document.getElementById('heatmap-image');
+                    const placeholder = document.getElementById('visualization-placeholder');
+                    
+                    // Add timestamp to prevent caching
+                    const timestamp = new Date().getTime();
+                    heatmapImage.src = result.heatmap_path + '?t=' + timestamp;
+                    heatmapImage.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    
+                    showSuccessMessage('Heatmap generated successfully!');
+                } else {
+                    throw new Error(result.error || 'Heatmap generation failed');
+                }
+            } catch (error) {
+                console.error('Heatmap error:', error);
+                showErrorMessage('Heatmap generation failed: ' + error.message);
+            } finally {
+                loadingSpinner.style.display = 'none';
+                generateHeatmapBtn.disabled = false;
+            }
+        }
+
+        function showSuccessMessage(message) {
+            // Create a temporary success message
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #4CAF50;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            `;
+            successDiv.textContent = message;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(successDiv);
+            }, 3000);
+        }
+
+        function showErrorMessage(message) {
+            // Create a temporary error message
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #f44336;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            `;
+            errorDiv.textContent = message;
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(errorDiv);
+            }, 5000);
+        }
+    });
+</script>
+</body>
+</html>
