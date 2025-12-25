@@ -31,7 +31,6 @@ A comprehensive AI-powered solution for monitoring and managing poultry health, 
 - **Multi-modal Analysis**: Support for both image and video analysis
 - **Multi-language Support**: Interface available in English and Arabic
 - **Responsive Web Interface**: Built with Flask for the backend and modern web technologies
-- **Mobile App**: Cross-platform mobile application built with Flutter
 
 ## 🛠️ Technical Stack
 
@@ -48,10 +47,6 @@ A comprehensive AI-powered solution for monitoring and managing poultry health, 
 - Chart.js for data visualization
 - Responsive design for all devices
 
-### Mobile App (Flutter)
-- Cross-platform mobile application
-- Real-time monitoring and alerts
-- Integration with backend services
 
 ## 🚀 Getting Started
 
@@ -61,7 +56,6 @@ A comprehensive AI-powered solution for monitoring and managing poultry health, 
 - Flask
 - OpenCV
 - Ultralytics (YOLOv8)
-- Flutter (for mobile app development)
 
 ### Installation
 
@@ -95,25 +89,6 @@ A comprehensive AI-powered solution for monitoring and managing poultry health, 
    ```
    The web interface will be available at `http://localhost:5000`
 
-## 📱 Mobile App Setup
-
-1. **Install Flutter** (if not already installed)
-   - Follow the official Flutter installation guide: https://flutter.dev/docs/get-started/install
-
-2. **Navigate to the Flutter app directory**
-   ```bash
-   cd flutter_app
-   ```
-
-3. **Get dependencies**
-   ```bash
-   flutter pub get
-   ```
-
-4. **Run the app**
-   ```bash
-   flutter run
-   ```
 
 ## 📊 Project Structure
 
@@ -130,10 +105,6 @@ Poultry-Monitoring-System/
 ├── templates/            # HTML templates
 ├── uploads/              # Temporary storage for uploaded files
 ├── outputs/              # Output files (results, processed images)
-└── flutter_app/          # Mobile application source code
-    ├── lib/              # Flutter application code
-    ├── pubspec.yaml      # Flutter dependencies
-    └── ...
 ```
 
 ## 📝 Usage
@@ -143,12 +114,6 @@ Poultry-Monitoring-System/
 2. Upload images or videos for analysis
 3. View detailed reports and visualizations
 4. Access historical data and analytics
-
-### Mobile App
-1. Launch the Flutter app
-2. Connect to your farm's monitoring system
-3. Receive real-time alerts and notifications
-4. Monitor poultry health on the go
 
 ## 🤝 Contributing
 
@@ -166,5 +131,4 @@ For any inquiries, please contact the project maintainers.
 
 - YOLOv8 by Ultralytics
 - PyTorch community
-- Flutter framework
 - All open-source libraries used in this project
