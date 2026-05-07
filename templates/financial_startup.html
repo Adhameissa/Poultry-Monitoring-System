@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t["startup_planner"] }} - Poultry Financials</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .language-toggle {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        [dir="rtl"] .language-toggle {
+            justify-content: flex-start;
+        }
+
+        .language-toggle .btn {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+
+        .language-toggle .active-lang {
+            background-color: var(--primary-green);
+            color: #fff;
+        }
+
+        .financial-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .financial-form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .financial-form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .input-hint {
+            display: block;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .financial-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.75rem;
+            margin-top: 2rem;
+        }
+
+        .chart-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem 1.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.06);
+            transition: box-shadow 0.2s ease;
+        }
+        .chart-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+        }
+        .chart-card canvas {
+            max-height: 300px;
+            min-height: 220px;
+        }
+
+        .chart-card h3 {
+            margin-bottom: 0.35rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            letter-spacing: -0.01em;
+        }
+
+        .chart-card p {
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .kpi-note {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .excel-errors {
+            margin-bottom: 0.75rem;
+            padding: 0.75rem 1rem;
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            border-radius: 4px;
+            color: #b71c1c;
+            font-size: 0.9rem;
+        }
+
+        .excel-preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .excel-preview-table th,
+        .excel-preview-table td {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+        }
+
+        .excel-preview-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .explanation-card {
+            margin-top: 2rem;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .explanation-card h3 {
+            margin-bottom: 0.5rem;
+            color: var(--dark-green);
+        }
+
+        .explanation-card p {
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .mode-toggle label {
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .market-prices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem 1.5rem;
+        }
+        .market-price-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .market-price-label {
+            font-size: 0.85rem;
+            color: #555;
+        }
+        .market-price-value {
+            font-weight: 600;
+            color: var(--dark-green);
+        }
+        .upload-card,
+        .chart-card,
+        .result-card {
+            border: 1px solid rgba(46, 125, 50, 0.12);
+            box-shadow: 0 10px 24px rgba(14, 34, 22, 0.08);
+        }
+        .result-card {
+            background: linear-gradient(145deg, #ffffff, #f7fbf8);
+        }
+        .result-card.highlight-card {
+            border: 2px solid var(--primary-green);
+            background: linear-gradient(145deg, #f0f8f2, #e8f5e9);
+        }
+        .insight-box {
+            margin: 1.5rem 0;
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-radius: 10px;
+            border-left: 4px solid #1565c0;
+        }
+        .insight-box h3 { margin: 0 0 0.75rem 0; color: #0d47a1; font-size: 1.1rem; }
+        .insight-box ul { margin: 0; padding-left: 1.25rem; }
+        .insight-box li { margin-bottom: 0.35rem; font-size: 0.95rem; }
+        .electricity-calc-box {
+            margin-top: 0.5rem;
+            padding: 0.6rem;
+            background: #f5f9ff;
+            border-radius: 6px;
+            border-left: 3px solid #1565c0;
+        }
+        .calc-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.4rem;
+        }
+        .calc-row input[type="number"] {
+            width: 5rem;
+            padding: 0.3rem 0.4rem;
+            font-size: 0.9rem;
+        }
+        .calc-result {
+            font-weight: 600;
+            color: var(--dark-green);
+            min-width: 4rem;
+        }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+        .chart-card {
+            background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+        }
+        .decision-card {
+            margin: 1.25rem 0;
+            padding: 1.5rem 1.75rem;
+            background: linear-gradient(145deg, #e8f5e9 0%, #f1f8e9 100%);
+            border: 2px solid var(--primary-green);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.12);
+        }
+        .decision-card h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            color: var(--dark-green);
+        }
+        .decision-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 0.35rem 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+        .decision-row .label { font-weight: 600; color: #1e293b; }
+        .decision-row .value { color: var(--dark-green); font-weight: 600; }
+        .decision-why {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            font-size: 0.9rem;
+            color: #475569;
+        }
+        .decision-why ul { margin: 0.35rem 0 0 1.25rem; padding: 0; }
+        .weather-details-toggle { font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-kiwi-bird"></i>
+                <span>Poultry Monitor</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="/" class="nav-link">{{ 'Home' if lang == 'en' else 'الرئيسية' }}</a></li>
+                <li class="nav-item"><a href="/dashboard" class="nav-link">{{ 'Dashboard' if lang == 'en' else 'لوحة
+                        المتابعة' }}</a></li>
+                <li class="nav-item"><a href="/disease" class="nav-link">{{ 'Disease Detection' if lang == 'en' else
+                        'كشف الأمراض' }}</a></li>
+                <li class="nav-item"><a href="/weight" class="nav-link">{{ 'Weight Estimation' if lang == 'en' else
+                        'تقدير الوزن' }}</a></li>
+                <li class="nav-item"><a href="{{ url_for('financial.startup', lang=lang) }}" class="nav-link active">{{
+                        t["nav_startup"] }}</a></li>
+                <li class="nav-item"><a href="{{ url_for('financial.dashboard_financial', lang=lang) }}"
+                        class="nav-link">{{ t["nav_dashboard"] }}</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="page-header" {% if lang=='ar' %}style="text-align: right;" {% endif %}>
+            <h1>{{ t["startup_planner"] }}</h1>
+            <p>{{ t["startup_subtitle"] }}</p>
+        </div>
+
+        <div class="language-toggle">
+            <a href="{{ url_for('financial.startup', lang='en') }}"
+                class="btn btn-secondary {% if lang == 'en' %}active-lang{% endif %}">EN</a>
+            <a href="{{ url_for('financial.startup', lang='ar') }}"
+                class="btn btn-secondary {% if lang == 'ar' %}active-lang{% endif %}">عربي</a>
+        </div>
+
+        <section class="upload-section">
+            <div class="upload-card market-prices-card" style="margin-bottom: 1.5rem;">
+                <h2><i class="fas fa-chart-line"></i> {{ t["todays_prices"] }}</h2>
+                <p class="kpi-note">{{ t["todays_prices_subtitle"] }}</p>
+                <div class="market-prices-grid">
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["broiler_price"] }}</span>
+                        <span class="market-price-value">{{ '%.2f' % today_broiler_price if today_broiler_price else t['na'] }} {{ t["egp"] }}/kg</span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["broiler_price_range"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_broiler_min and today_broiler_max %}
+                            {{ '%.2f' % today_broiler_min }} - {{ '%.2f' % today_broiler_max }} {{ t["egp"] }}/kg
+                            {% else %}
+                            {{ t['na'] }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["chick_price_altkia"] }}</span>
+                        <span class="market-price-value">{{ '%.2f' % today_chick_price if today_chick_price else t['na'] }} {{ t["egp"] }}</span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["chick_price_range"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_chick_min and today_chick_max %}
+                            {{ '%.2f' % today_chick_min }} - {{ '%.2f' % today_chick_max }} {{ t["egp"] }}
+                            {% else %}
+                            {{ t['na'] }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="market-price-item feed-section">
+                        <span class="market-price-label">{{ t["feed_starter"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_feed and today_feed.get('starter_price_per_ton') %}
+                            {{ '%.0f' % today_feed.starter_price_per_ton }} {{ t["egp"] }}/{{ t["per_ton"] }} · {{ '%.2f' % today_feed.starter_price_per_kg }} {{ t["egp"] }}/{{ t["per_kg"] }}
+                            {% else %}
+                            {{ t['na'] }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="market-price-item feed-section">
+                        <span class="market-price-label">{{ t["feed_grower"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_feed and today_feed.get('grower_price_per_ton') %}
+                            {{ '%.0f' % today_feed.grower_price_per_ton }} {{ t["egp"] }}/{{ t["per_ton"] }} · {{ '%.2f' % today_feed.grower_price_per_kg }} {{ t["egp"] }}/{{ t["per_kg"] }}
+                            {% else %}
+                            {{ t['na'] }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="market-price-item feed-section">
+                        <span class="market-price-label">{{ t["feed_finisher"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_feed and today_feed.get('finisher_price_per_ton') %}
+                            {{ '%.0f' % today_feed.finisher_price_per_ton }} {{ t["egp"] }}/{{ t["per_ton"] }} · {{ '%.2f' % today_feed.finisher_price_per_kg }} {{ t["egp"] }}/{{ t["per_kg"] }}
+                            {% else %}
+                            {{ t['na'] }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-card" style="margin-bottom: 1.5rem;">
+                <h2>{{ t["upload_excel"] }}</h2>
+                <p>{{ t["upload_excel_description"] }}</p>
+                {% if errors %}
+                <div class="excel-errors">
+                    {% for err in errors %}
+                    <div>{{ err }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <form method="POST" action="{{ url_for('financial.startup', lang=lang) }}"
+                    enctype="multipart/form-data">
+                    <input type="hidden" name="lang" value="{{ lang }}">
+                    <div class="financial-form-grid">
+                        <div class="financial-form-group">
+                            <label for="excel_file">{{ t["upload_excel"] }}</label>
+                            <input type="file" id="excel_file" name="excel_file" accept=".xlsx,.csv">
+                        </div>
+                    </div>
+                    <div class="financial-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-file-upload"></i>
+                            {{ t["upload_excel"] }}
+                        </button>
+                        <a href="{{ url_for('financial.startup_template') }}" class="btn btn-secondary">
+                            <i class="fas fa-download"></i>
+                            {{ t["download_template"] }}
+                        </a>
+                    </div>
+
+                    {% if excel_preview_rows %}
+                    <div class="kpi-note" style="margin-top: 1rem;">
+                        {{ t["excel_preview"] }}
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="excel-preview-table">
+                            <thead>
+                                <tr>
+                                    {% for h in excel_preview_headers %}
+                                    <th>{{ h }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in excel_preview_rows %}
+                                <tr>
+                                    {% for h in excel_preview_headers %}
+                                    <td>{{ row[h] }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="upload-card">
+                <h2>{{ t["financial_module"] }}</h2>
+                <p>{{ t["currency_egp"] }}</p>
+                <form method="POST" action="{{ url_for('financial.startup_calculate', lang=lang) }}">
+                    <input type="hidden" name="lang" value="{{ lang }}">
+                    <div class="mode-toggle">
+                        <span>{{ t["mode"] }}:</span>
+                        <label>
+                            <input type="radio" name="mode" value="simple" {% if mode=='simple' %}checked{% endif %}>
+                            {{ t["mode_simple"] }}
+                        </label>
+                        <label>
+                            <input type="radio" name="mode" value="advanced" {% if mode !='simple' %}checked{% endif %}>
+                            {{ t["mode_advanced"] }}
+                        </label>
+                    </div>
+
+                    <div id="startup-simple-fields" class="financial-form-grid"
+                        style="{% if mode != 'simple' %}display:none;{% endif %}">
+                        <div class="financial-form-group">
+                            <label for="total_budget">{{ t["total_budget"] }}</label>
+                            <input type="number" min="0" step="0.01" id="total_budget" name="total_budget"
+                                value="{{ form_values.get('total_budget', '') }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="chick_price_simple">{{ t["chick_price"] }}</label>
+                            <input type="number" min="0" step="any" id="chick_price_simple" name="chick_price"
+                                value="{{ form_values.chick_price }}">
+                            <span class="input-hint">{{ t["todays_prices_subtitle"] }} · {{ t["manual_price_override"] }}</span>
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="selling_price_per_kg_simple">{{ t["selling_price_per_kg"] }}</label>
+                            <input type="number" min="0" step="0.01" id="selling_price_per_kg_simple"
+                                name="selling_price_per_kg" value="{{ form_values.selling_price_per_kg }}">
+                            <span class="input-hint">{{ t["todays_prices_subtitle"] }} · {{ t["manual_price_override"] }}</span>
+                        </div>
+                    </div>
+
+                    <div id="startup-advanced-fields" class="financial-form-grid"
+                        style="{% if mode == 'simple' %}display:none;{% endif %}">
+                        <div class="financial-form-group">
+                            <label for="number_of_chickens">{{ t["number_of_chickens"] }}</label>
+                            <input type="number" min="0" step="1" id="number_of_chickens" name="number_of_chickens"
+                                value="{{ form_values.number_of_chickens }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="chick_price">{{ t["chick_price"] }}</label>
+                            <input type="number" min="0" step="any" id="chick_price" name="chick_price"
+                                value="{{ form_values.chick_price }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="starter_feed_kg_per_chick">{{ t["starter_feed_kg_per_chick"] }}</label>
+                            <input type="number" min="0" step="0.01" id="starter_feed_kg_per_chick"
+                                name="starter_feed_kg_per_chick" value="{{ form_values.starter_feed_kg_per_chick }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="starter_feed_price_per_kg">{{ t["starter_feed_price_per_kg"] }}</label>
+                            <input type="number" min="0" step="0.01" id="starter_feed_price_per_kg"
+                                name="starter_feed_price_per_kg" value="{{ form_values.starter_feed_price_per_kg }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="grower_feed_kg_per_chick">{{ t["grower_feed_kg_per_chick"] }}</label>
+                            <input type="number" min="0" step="0.01" id="grower_feed_kg_per_chick"
+                                name="grower_feed_kg_per_chick" value="{{ form_values.grower_feed_kg_per_chick }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="grower_feed_price_per_kg">{{ t["grower_feed_price_per_kg"] }}</label>
+                            <input type="number" min="0" step="0.01" id="grower_feed_price_per_kg"
+                                name="grower_feed_price_per_kg" value="{{ form_values.grower_feed_price_per_kg }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="finisher_feed_kg_per_chick">{{ t["finisher_feed_kg_per_chick"] }}</label>
+                            <input type="number" min="0" step="0.01" id="finisher_feed_kg_per_chick"
+                                name="finisher_feed_kg_per_chick" value="{{ form_values.finisher_feed_kg_per_chick }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="finisher_feed_price_per_kg">{{ t["finisher_feed_price_per_kg"] }}</label>
+                            <input type="number" min="0" step="0.01" id="finisher_feed_price_per_kg"
+                                name="finisher_feed_price_per_kg" value="{{ form_values.finisher_feed_price_per_kg }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="electricity_cost_per_day">{{ t["electricity_cost_per_day"] }}</label>
+                            <input type="number" min="0" step="any" id="electricity_cost_per_day"
+                                name="electricity_cost_per_day" value="{{ form_values.electricity_cost_per_day }}">
+                            <div class="electricity-calc-box" id="electricity-calc-box">
+                                <p class="kpi-note">{{ t["electricity_calc_subtitle"] }}</p>
+                                <div class="calc-row">
+                                    <input type="number" min="0" step="0.1" id="calc_kw" placeholder="{{ t['total_kw_load'] }}" title="{{ t['total_kw_load'] }}">
+                                    <span>×</span>
+                                    <input type="number" min="0" max="24" step="1" id="calc_hours" placeholder="h" value="24" title="{{ t['electricity_hours_per_day'] }}">
+                                    <span>×</span>
+                                    <input type="number" min="0" step="0.01" id="calc_rate" placeholder="EGP/kWh" value="2" title="{{ t['electricity_rate'] }}">
+                                    <span>=</span>
+                                    <span id="calc_result" class="calc-result">—</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="calc_apply">{{ t["calculate"] }}</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="labor_cost_per_day">{{ t["labor_cost_per_day"] }}</label>
+                            <input type="number" min="0" step="any" id="labor_cost_per_day" name="labor_cost_per_day"
+                                value="{{ form_values.labor_cost_per_day }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="medicine_cost_total">{{ t["medicine_cost_total"] }}</label>
+                            <input type="number" min="0" step="any" id="medicine_cost_total" name="medicine_cost_total"
+                                value="{{ form_values.medicine_cost_total }}">
+                            <span class="input-hint">{{ t["medicine_cost_hint"] }}</span>
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="water_cost_total">{{ t["water_cost_total"] }}</label>
+                            <input type="number" min="0" step="any" id="water_cost_total" name="water_cost_total"
+                                value="{{ form_values.water_cost_total }}">
+                            <span class="input-hint">{{ t["water_cost_hint"] }}</span>
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="annual_farm_rent">{{ t["annual_farm_rent"] }}</label>
+                            <input type="number" min="0" step="any" id="annual_farm_rent" name="annual_farm_rent"
+                                value="{{ form_values.annual_farm_rent }}">
+                            <span class="input-hint">{{ t["farm_rent_hint"] }}</span>
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="expected_days_to_sell">{{ t["expected_days_to_sell"] }}</label>
+                            <input type="number" min="1" step="1" id="expected_days_to_sell"
+                                name="expected_days_to_sell" value="{{ form_values.expected_days_to_sell }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="expected_avg_weight_kg">{{ t["expected_avg_weight_kg"] }}</label>
+                            <input type="number" min="0" step="any" id="expected_avg_weight_kg"
+                                name="expected_avg_weight_kg" value="{{ form_values.expected_avg_weight_kg }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="mortality_rate_percent">{{ t["mortality_rate_percent"] }}</label>
+                            <input type="number" min="0" max="100" step="0.1" id="mortality_rate_percent"
+                                name="mortality_rate_percent" value="{{ form_values.mortality_rate_percent }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="selling_price_per_kg">{{ t["selling_price_per_kg"] }}</label>
+                            <input type="number" min="0" step="0.01" id="selling_price_per_kg"
+                                name="selling_price_per_kg" value="{{ form_values.selling_price_per_kg }}">
+                        </div>
+                    </div>
+
+                    <div class="kpi-note" id="feed-total-note" style="{% if mode == 'simple' %}display:none;{% endif %}">
+                        {{ t["calculated_feed_total_per_chick"] }}:
+                        {{ '%.2f' % ((form_values.starter_feed_kg_per_chick * form_values.starter_feed_price_per_kg) + (form_values.grower_feed_kg_per_chick * form_values.grower_feed_price_per_kg) + (form_values.finisher_feed_kg_per_chick * form_values.finisher_feed_price_per_kg)) }}
+                        {{ t["currency_label"] }}
+                    </div>
+
+                    <div class="financial-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calculator"></i> {{ t["calculate"] }}
+                        </button>
+                    </div>
+                    <p class="kpi-note">
+                        {% if lang == 'en' %}
+                        {{ t["auto_assumptions_note"] }}
+                        {% else %}
+                        {{ t["auto_assumptions_note"] }}
+                        {% endif %}
+                    </p>
+                </form>
+            </div>
+
+            <div class="upload-card" style="margin-top: 1.5rem;">
+                <h2>{{ t["feed_distribution"] }}</h2>
+                <p class="kpi-note">{{ t["feed_distribution_subtitle"] }}</p>
+                <div style="overflow-x:auto;">
+                    <table class="excel-preview-table">
+                        <thead>
+                            <tr>
+                                <th>{{ t["phase"] }}</th>
+                                <th>{{ t["age"] }}</th>
+                                <th>{{ t["feed_type"] }}</th>
+                                <th>{{ t["avg_consumption"] }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ t["starter_phase"] }}</td>
+                                <td>{{ t["day_1_10"] }}</td>
+                                <td>{{ t["starter_type"] }}</td>
+                                <td>{{ t["starter_range"] }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ t["grower_phase"] }}</td>
+                                <td>{{ t["day_11_24"] }}</td>
+                                <td>{{ t["grower_type"] }}</td>
+                                <td>{{ t["grower_range"] }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ t["finisher_phase"] }}</td>
+                                <td>{{ t["day_25_35"] }}</td>
+                                <td>{{ t["finisher_type"] }}</td>
+                                <td>{{ t["finisher_range"] }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ t["total_phase"] }}</td>
+                                <td>{{ t["days_35"] }}</td>
+                                <td>{{ t["none_dash"] }}</td>
+                                <td>{{ t["total_range"] }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="results-section" {% if not results %}style="display: none;" {% endif %}>
+            <h2>{{ t["results_title"] }}</h2>
+            <div class="results-grid">
+                <div class="result-card highlight-card">
+                    <div class="result-icon">
+                        <i class="fas fa-chicken"></i>
+                    </div>
+                    <h3>{{ t["chicks_to_buy"] }}</h3>
+                    <div class="result-value">
+                        {% if results and form_values %}{{ '{:,.0f}'.format(form_values.number_of_chickens) }}{% else %}0{% endif %}
+                    </div>
+                    <p>{{ t["chicks_to_buy_subtitle"] }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-sack-dollar"></i>
+                    </div>
+                    <h3>{{ t["total_cost"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:,.2f}'.format(results.total_cost) }} {{ t["currency_label"] }}{% else
+                        %}0{% endif %}
+                    </div>
+                    <p>{{ t["currency_egp"] }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-money-bill-trend-up"></i>
+                    </div>
+                    <h3>{{ t["expected_revenue"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:,.2f}'.format(results.revenue) }} {{ t["currency_label"] }}{% else %}0{%
+                        endif %}
+                    </div>
+                    <p>{{ t["currency_egp"] }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-scale-balanced"></i>
+                    </div>
+                    <h3>{{ t["net_profit"] }}</h3>
+                    <div class="result-value" style="{% if results and results.profit < 0 %}color:#F44336;{% endif %}">
+                        {% if results %}{{ '{:,.2f}'.format(results.profit) }} {{ t["currency_label"] }}{% else %}0{%
+                        endif %}
+                    </div>
+                    <p>{% if results and results.profit < 0 %}{{ t["profit_negative"] }}{% else %}{{
+                            t["profit_positive"] }}{% endif %}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <h3>{{ t["roi_percent"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:.1f}'.format(results.roi * 100) }}%{% else %}0%{% endif %}
+                    </div>
+                    <p>{{ t["roi"] }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-scale-unbalanced"></i>
+                    </div>
+                    <h3>{{ t["break_even_per_kg"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:,.2f}'.format(results.break_even_price) }} {{ t["currency_label"] }}{%
+                        else %}0{% endif %}
+                    </div>
+                    <p>{{ t["currency_egp"] }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-drumstick-bite"></i>
+                    </div>
+                    <h3>{{ t["live_chickens"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:,.0f}'.format(results.live_chickens) }}{% else %}0{% endif %}
+                    </div>
+                    <p>{{ t["total_weight"] }}: {% if results %}{{ '{:,.1f}'.format(results.total_weight) }}{% else
+                        %}0{% endif %}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3>{{ t["cost_per_chick"] }}</h3>
+                    <div class="result-value">
+                        {% if results and form_values and form_values.number_of_chickens %}
+                        {{ '{:,.2f}'.format(results.total_cost / form_values.number_of_chickens) }} {{ t["currency_label"] }}
+                        {% else %}0{% endif %}
+                    </div>
+                    <p>{{ t["currency_egp"] }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-weight-hanging"></i>
+                    </div>
+                    <h3>{{ t["cost_per_kg_produced"] }}</h3>
+                    <div class="result-value">
+                        {% if results and results.total_weight %}
+                        {{ '{:,.2f}'.format(results.total_cost / results.total_weight) }} {{ t["currency_label"] }}
+                        {% else %}0{% endif %}
+                    </div>
+                    <p>{{ t["currency_egp"] }}/kg</p>
+                </div>
+            </div>
+
+            <div class="insight-box" {% if results and cost_labels and cost_values %}style="display:block"{% else %}style="display:none"{% endif %}>
+                <h3><i class="fas fa-lightbulb"></i> {{ t["insights_title"] }}</h3>
+                <ul>
+                    {% if results and form_values and form_values.number_of_chickens %}
+                    <li><strong>{{ t["chicks_to_buy"] }}:</strong> {{ '{:,.0f}'.format(form_values.number_of_chickens) }} — {{ t["chicks_to_buy_subtitle"] }}</li>
+                    <li><strong>{{ t["cost_per_chick"] }}:</strong> {{ '{:,.2f}'.format(results.total_cost / form_values.number_of_chickens) }} {{ t["currency_label"] }}</li>
+                    {% endif %}
+                    {% if results and results.total_weight %}
+                    <li><strong>{{ t["cost_per_kg_produced"] }}:</strong> {{ '{:,.2f}'.format(results.total_cost / results.total_weight) }} {{ t["currency_label"] }}/kg</li>
+                    {% endif %}
+                    {% if results and top_cost_label and top_cost_pct is not none %}
+                    <li><strong>{{ t["top_cost"] }}:</strong> {{ top_cost_label }} ({{ '{:.1f}'.format(top_cost_pct) }}%)</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            {% if results and (weather_best_option or recommended_sale_date) %}
+            <div class="decision-card">
+                <h3><i class="fas fa-clipboard-check"></i> {{ t["decision_title"] }}</h3>
+                {% if weather_best_option %}
+                <div class="decision-row">
+                    <span class="label">{{ t["decision_start"] }}</span>
+                    <span class="value">{{ weather_best_option.start_date.strftime('%d %b %Y') }}</span>
+                    <span style="color:#64748b;">→ {{ weather_best_option.end_date.strftime('%d %b %Y') }}</span>
+                </div>
+                {% endif %}
+                {% if recommended_sale_date %}
+                <div class="decision-row">
+                    <span class="label">{{ t["decision_sell"] }}</span>
+                    <span class="value">{{ recommended_sale_date.strftime('%d %b %Y') }}</span>
+                    {% if form_values %}
+                    <span class="input-hint" style="margin-left:0.25rem;">{{ t["decision_sell_hint"] | replace("{days}", (form_values.expected_days_to_sell | default(35)) | string) }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="decision-row">
+                    <span class="label">{{ t["decision_price"] }}:</span>
+                    <span class="value">
+                        {% if recommended_sale_price %}
+                        ~{{ '%.1f' % recommended_sale_price }} {{ t["currency_label"] }}/kg
+                        {% else %}
+                        — {{ t["see_forecast_below"] }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% if decision_profit_per_kg is not none %}
+                <div class="decision-row">
+                    <span class="label">{{ t["decision_profit_per_kg"] }}:</span>
+                    <span class="value">
+                        {{ '%.1f' % decision_profit_per_kg }} {{ t["currency_label"] }}/kg
+                    </span>
+                </div>
+                {% endif %}
+                {% if decision_total_profit is not none %}
+                <div class="decision-row">
+                    <span class="label">{{ t["decision_total_profit"] }}:</span>
+                    <span class="value">
+                        {{ '{:,.0f}'.format(decision_total_profit) }} {{ t["currency_label"] }}
+                    </span>
+                </div>
+                {% endif %}
+                {% if decision_label_key %}
+                <div class="decision-row">
+                    <span class="label">{{ t["decision_label"] }}:</span>
+                    <span class="value">{{ t[decision_label_key] }}</span>
+                </div>
+                {% endif %}
+                <div class="decision-why">
+                    <strong>{{ t["decision_why"] }}</strong>
+                    <ul>
+                        {% if decision_profit_per_kg is not none %}
+                        <li>{{ t["decision_why_profit"] }}</li>
+                        {% endif %}
+                        {% if weather_best_option %}
+                        <li>{{ t["decision_why_weather"] }}</li>
+                        {% endif %}
+                        <li>{{ t["decision_why_price"] }}</li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if results and weather_best_option %}
+            <div class="upload-card" id="weather-ai-card" style="margin: 1.25rem 0;">
+                <h3><i class="fas fa-cloud-sun"></i> {{ t["weather_ai_title"] }}</h3>
+                <p class="kpi-note">
+                    {{ t["weather_ai_subtitle"] }}
+                    {% if weather_location_label %}
+                    · {{ t["weather_ai_location"] }}: {{ weather_location_label }}
+                    {% endif %}
+                </p>
+                <ul class="weather-ai-list">
+                    <li>
+                        <strong>{{ t["weather_ai_best_profit"] }}:</strong>
+                        {{ weather_best_option.start_date.strftime('%d %b %Y') }}
+                        → {{ weather_best_option.end_date.strftime('%d %b %Y') }}
+                        — {{ '%.1f' % weather_best_option.adjusted_mortality_percent }}% {{ t["mortality_rate_percent"] }}
+                        ({{ t["risk_" + weather_best_option.risk_label] }})
+                        <div class="input-hint">
+                            {{ t["weather_ai_weather_summary"] }}:
+                            {{ '%.1f' % weather_best_option.avg_temp_max }}°C,
+                            {{ '%.0f' % weather_best_option.avg_humidity }}% RH ·
+                            {{ weather_best_option.optimal_days }} {{ t["weather_days_optimal"] }} ·
+                            {{ weather_best_option.severe_heat_days + weather_best_option.extreme_heat_days }} {{ t["weather_days_hot"] }}
+                        </div>
+                    </li>
+                    {% if weather_all_options and weather_all_options|length > 1 %}
+                    <li>
+                        <strong>{{ t["weather_ai_other"] }}:</strong>
+                        <ul>
+                            {% for opt in weather_all_options %}
+                            {% if opt.start_date != weather_best_option.start_date %}
+                            <li>
+                                {{ opt.start_date.strftime('%d %b') }}
+                                → {{ opt.end_date.strftime('%d %b') }}:
+                                {{ '%.1f' % opt.adjusted_mortality_percent }}%
+                                ({{ t["risk_" + opt.risk_label] }})
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if results and price_forecast %}
+            <div class="upload-card" style="margin: 1.25rem 0;">
+                <h3><i class="fas fa-chart-line"></i> {{ t["forecast_title"] }}</h3>
+                <p class="kpi-note">{{ t["forecast_subtitle"] }}</p>
+                <div style="overflow-x:auto;">
+                    <table class="excel-preview-table">
+                        <thead>
+                            <tr>
+                                <th>{{ t["forecast_date"] }}</th>
+                                <th>{{ t["forecast_low"] }}</th>
+                                <th>{{ t["forecast_expected"] }}</th>
+                                <th>{{ t["forecast_high"] }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in price_forecast[:35] %}
+                            <tr>
+                                <td>{{ row.date }}</td>
+                                <td>{{ '%.1f' % row.low_price }} {{ t["currency_label"] }}</td>
+                                <td>{{ '%.1f' % row.expected_price }} {{ t["currency_label"] }}</td>
+                                <td>{{ '%.1f' % row.high_price }} {{ t["currency_label"] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if forecast_mae is not none and forecast_rmse is not none %}
+                <p class="kpi-note">
+                    Model error (median): MAE ≈ {{ '%.1f' % forecast_mae }} {{ t["currency_label"] }},
+                    RMSE ≈ {{ '%.1f' % forecast_rmse }} {{ t["currency_label"] }}.
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>{{ t["profit_vs_selling_day_30_45"] }}</h3>
+                    <p>{{ t["profit_vs_selling_day_30_45_subtitle"] }}</p>
+                    {% if decision_best_profit_day_offset is not none and decision_max_profit is not none %}
+                    <p class="kpi-note">
+                        {{ 'Max profit' }}: {{ '{:,.0f}'.format(decision_max_profit) }} {{ t["currency_label"] }}
+                        at day {{ decision_best_profit_day_offset }}.
+                    </p>
+                    {% endif %}
+                    <canvas id="profitVsSellingDayChartStartup"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>{{ t["price_forecast_decision_chart"] }}</h3>
+                    <p>{{ t["price_forecast_decision_chart_subtitle"] }}</p>
+                    <p class="kpi-note">
+                        Recommended day: {{ form_values.expected_days_to_sell | default(35) }}.
+                    </p>
+                    <canvas id="priceForecastDecisionChartStartup"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>{{ t["weight_growth_curve"] }}</h3>
+                    <p>{{ t["weight_growth_curve_subtitle"] }}</p>
+                    <canvas id="weightGrowthCurveChartStartup"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>{{ t["cumulative_cost_curve"] }}</h3>
+                    <p>{{ t["cumulative_cost_curve_subtitle"] }}</p>
+                    <canvas id="cumulativeCostCurveChartStartup"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>{{ t["break_even_visualization"] }}</h3>
+                    <p>{{ t["break_even_visualization_subtitle"] }}</p>
+                    {% if decision_break_even_day_offset is not none %}
+                    <p class="kpi-note">
+                        Break-even around day {{ decision_break_even_day_offset }}.
+                    </p>
+                    {% endif %}
+                    <canvas id="breakEvenPriceVsCostChartStartup"></canvas>
+                </div>
+
+                <div class="chart-card" style="overflow-x:auto;">
+                    <h3>{{ t["scenario_comparison_table"] }}</h3>
+                    <p>{{ t["scenario_comparison_subtitle"] }}</p>
+                    {% if decision_scenarios and decision_scenarios|length > 0 %}
+                    <table class="excel-preview-table">
+                        <thead>
+                            <tr>
+                                <th>{{ t["scenario_col"] }}</th>
+                                <th>{{ t["sell_in_days"] }}</th>
+                                <th>{{ t["forecast_price"] }}</th>
+                                <th>{{ t["profit_per_kg"] }}</th>
+                                <th>{{ t["total_expected_profit"] }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in decision_scenarios %}
+                            <tr>
+                                <td>{{ row.label }}</td>
+                                <td>{{ row.sell_in_days }}</td>
+                                <td>{{ '%.1f' % row.forecast_price_per_kg }} {{ t["currency_label"] }}/kg</td>
+                                <td>{{ '%.1f' % row.profit_per_kg }} {{ t["currency_label"] }}/kg</td>
+                                <td>{{ '{:,.0f}'.format(row.total_profit) }} {{ t["currency_label"] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="kpi-note">No forecast available right now.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>{{ t["cost_breakdown"] }}</h3>
+                    <p>{{ t["cost_breakdown_subtitle"] }}</p>
+                    <canvas id="costBreakdownChart"></canvas>
+                    {% if results and cost_labels and cost_values %}
+                    <div style="margin-top: 1rem; overflow-x: auto;">
+                        <table class="excel-preview-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ t["cost_breakdown"] }}</th>
+                                    <th>{{ t["total_cost"] }} ({{ t["currency_label"] }})</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for label in cost_labels %}
+                                {% set idx = loop.index0 %}
+                                <tr>
+                                    <td>{{ label }}</td>
+                                    <td>{{ '{:,.2f}'.format(cost_values[idx]) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="chart-card">
+                    <h3>{{ t["cost_breakdown_bar"] }}</h3>
+                    <p>{{ t["cost_breakdown_bar_subtitle"] }}</p>
+                    <canvas id="costBreakdownBarChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>{{ t["cost_vs_revenue"] }}</h3>
+                    <p>{{ t["cost_vs_revenue_subtitle"] }}</p>
+                    <canvas id="costVsRevenueChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>{{ t["profit_sensitivity"] }}</h3>
+                    <p>{{ t["profit_sensitivity_subtitle"] }}</p>
+                    <canvas id="profitSensitivityChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>{{ t["weight_vs_mortality"] }}</h3>
+                    <p>{{ t["weight_vs_mortality_subtitle"] }}</p>
+                    <canvas id="mortalityImpactChart"></canvas>
+                </div>
+            </div>
+
+            <div class="explanation-card">
+                <h3>{{ t["financial_module"] }}</h3>
+                <p>{{ t["startup_expl_cost_pie"] }}</p>
+                <p>{{ t["startup_expl_feed_tip"] }}</p>
+                <p>{{ t["startup_expl_sensitivity"] }}</p>
+                <p>{{ t["startup_expl_mortality"] }}</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2023 Poultry Monitoring System. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        (function () {
+            setupStartupModeToggle();
+            setupElectricityCalculator();
+
+            const hasResults = {{ 'true' if results else 'false' }};
+            if (!hasResults) return;
+
+            const costLabels = {{ cost_labels| tojson }};
+            const costValues = {{ cost_values| tojson }};
+            const totalCost = {{ (results.total_cost if results else 0)| tojson }};
+            const revenue = {{ (results.revenue if results else 0)| tojson }};
+            const currencyLabel = {{ t["currency_label"]| tojson }};
+            const sensitivityPrices = {{ sensitivity_prices| tojson }};
+            const sensitivityProfits = {{ sensitivity_profits| tojson }};
+            const mortalityRates = {{ mortality_rates| tojson }};
+            const mortalityRevenues = {{ mortality_revenues| tojson }};
+            // Decision charts arrays (startup plan)
+            const decisionCurveDayOffsets = {{ decision_curve_day_offsets|tojson }};
+            const decisionCurveProfits = {{ decision_curve_profits|tojson }};
+            const decisionCurvePrices = {{ decision_curve_prices|tojson }};
+            const decisionCurveCostPerKg = {{ decision_curve_cost_per_kg|tojson }};
+            const weightCurveDayOffsets = {{ weight_curve_day_offsets|tojson }};
+            const weightCurveWeights = {{ weight_curve_weights|tojson }};
+            const costCurveDayOffsets = {{ cost_curve_day_offsets|tojson }};
+            const costCurveCumulativeCosts = {{ cost_curve_cumulative_costs|tojson }};
+            const decisionBestProfitDayOffset = {{ decision_best_profit_day_offset|tojson }};
+            const decisionBreakEvenDayOffset = {{ decision_break_even_day_offset|tojson }};
+            const decisionMaxProfit = {{ decision_max_profit|tojson }};
+            const recommendedSellDayOffset = {{ (form_values.expected_days_to_sell | default(35)) | tojson }};
+
+            const chartPalette = [
+                '#0d9488', '#0891b2', '#0284c7', '#2563eb',
+                '#7c3aed', '#059669', '#d97706', '#dc2626'
+            ];
+            const chartDefaults = {
+                responsive: true,
+                maintainAspectRatio: true,
+                animation: { duration: 800, easing: 'easeOutCubic' },
+                font: { family: "'Segoe UI', 'Inter', system-ui, sans-serif", size: 12 },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 18,
+                            font: { size: 12, weight: '500' },
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(30, 41, 59, 0.96)',
+                        titleFont: { size: 13, weight: '600' },
+                        bodyFont: { size: 12 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        boxPadding: 6
+                    }
+                }
+            };
+
+            if (document.getElementById('costBreakdownChart') && costLabels.length > 0) {
+                new Chart(document.getElementById('costBreakdownChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: costLabels,
+                        datasets: [{
+                            data: costValues,
+                            backgroundColor: chartPalette,
+                            borderColor: '#ffffff',
+                            borderWidth: 2,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        cutout: '58%',
+                        plugins: {
+                            ...chartDefaults.plugins,
+                            tooltip: {
+                                ...chartDefaults.plugins.tooltip,
+                                callbacks: {
+                                    label: function(ctx) {
+                                        const v = ctx.parsed || 0;
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = total > 0 ? ((v / total) * 100).toFixed(1) : 0;
+                                        return ctx.label + ': ' + v.toLocaleString() + ' ' + currencyLabel + ' (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (document.getElementById('costBreakdownBarChart') && costLabels.length > 0) {
+                new Chart(document.getElementById('costBreakdownBarChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: costLabels,
+                        datasets: [{
+                            label: currencyLabel,
+                            data: costValues,
+                            backgroundColor: chartPalette,
+                            borderRadius: 4,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(148, 163, 184, 0.25)' },
+                                border: { display: false },
+                                ticks: {
+                                    callback: v => v.toLocaleString(),
+                                    font: { size: 11 },
+                                    color: '#64748b'
+                                }
+                            },
+                            y: {
+                                grid: { display: false },
+                                border: { display: false },
+                                ticks: { font: { size: 11 }, color: '#475569' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (document.getElementById('costVsRevenueChart')) {
+                new Chart(document.getElementById('costVsRevenueChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: [{{ t["total_cost"]| tojson }}, {{ t["expected_revenue"]| tojson }}],
+                        datasets: [{
+                            label: currencyLabel,
+                            data: [totalCost, revenue],
+                            backgroundColor: ['#f59e0b', '#059669'],
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(148, 163, 184, 0.25)' },
+                                border: { display: false },
+                                ticks: {
+                                    callback: v => v.toLocaleString(),
+                                    font: { size: 11 },
+                                    color: '#64748b'
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                border: { display: false },
+                                ticks: { font: { size: 11 }, color: '#475569' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (document.getElementById('profitSensitivityChart') && sensitivityPrices.length > 0) {
+                new Chart(document.getElementById('profitSensitivityChart'), {
+                    type: 'line',
+                    data: {
+                        labels: sensitivityPrices.map(p => Number(p).toFixed(1)),
+                        datasets: [{
+                            label: {{ t["net_profit"]| tojson }},
+                            data: sensitivityProfits,
+                            borderColor: '#0284c7',
+                            backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                            borderWidth: 2.5,
+                            tension: 0.35,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#0284c7',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            x: {
+                                title: { display: true, text: {{ t["selling_price_per_kg"]| tojson }}, font: { size: 11 }, color: '#64748b' },
+                                grid: { color: 'rgba(148, 163, 184, 0.2)' },
+                                border: { display: false },
+                                ticks: { font: { size: 10 }, color: '#64748b' }
+                            },
+                            y: {
+                                title: { display: true, text: {{ t["net_profit"]| tojson }} + ' (' + currencyLabel + ')', font: { size: 11 }, color: '#64748b' },
+                                grid: { color: 'rgba(148, 163, 184, 0.2)' },
+                                border: { display: false },
+                                ticks: { callback: v => v.toLocaleString(), font: { size: 10 }, color: '#64748b' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (document.getElementById('mortalityImpactChart') && mortalityRates.length > 0) {
+                new Chart(document.getElementById('mortalityImpactChart'), {
+                    type: 'line',
+                    data: {
+                        labels: mortalityRates.map(r => Number(r).toFixed(1) + '%'),
+                        datasets: [{
+                            label: {{ t["expected_revenue"]| tojson }},
+                            data: mortalityRevenues,
+                            borderColor: '#7c3aed',
+                            backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                            borderWidth: 2.5,
+                            tension: 0.35,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#7c3aed',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            x: {
+                                title: { display: true, text: {{ t["mortality_rate_percent"]| tojson }}, font: { size: 11 }, color: '#64748b' },
+                                grid: { color: 'rgba(148, 163, 184, 0.2)' },
+                                border: { display: false },
+                                ticks: { font: { size: 10 }, color: '#64748b' }
+                            },
+                            y: {
+                                title: { display: true, text: {{ t["expected_revenue"]| tojson }} + ' (' + currencyLabel + ')', font: { size: 11 }, color: '#64748b' },
+                                grid: { color: 'rgba(148, 163, 184, 0.2)' },
+                                border: { display: false },
+                                ticks: { callback: v => v.toLocaleString(), font: { size: 10 }, color: '#64748b' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Decision-focused startup charts
+            const profitSellCanvas = document.getElementById('profitVsSellingDayChartStartup');
+            if (profitSellCanvas && decisionCurveDayOffsets.length > 0) {
+                const bestIdx = (decisionBestProfitDayOffset === null) ? -1 : decisionCurveDayOffsets.indexOf(decisionBestProfitDayOffset);
+                new Chart(profitSellCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: decisionCurveDayOffsets,
+                        datasets: [
+                            {
+                                label: 'Profit (EGP)',
+                                data: decisionCurveProfits,
+                                borderColor: '#1565c0',
+                                backgroundColor: 'rgba(21,101,192,0.12)',
+                                tension: 0.25,
+                                borderWidth: 2,
+                                fill: true
+                            },
+                            {
+                                label: 'Max profit',
+                                data: decisionCurveProfits.map((v, i) => (i === bestIdx ? v : null)),
+                                borderColor: '#2e7d32',
+                                backgroundColor: '#2e7d32',
+                                pointRadius: 5,
+                                showLine: false
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            x: { title: { display: true, text: 'Day from start' } },
+                            y: { title: { display: true, text: 'Profit (EGP)' } }
+                        }
+                    }
+                });
+            }
+
+            const priceDecisionCanvas = document.getElementById('priceForecastDecisionChartStartup');
+            if (priceDecisionCanvas && decisionCurveDayOffsets.length > 0) {
+                const recIdx = (recommendedSellDayOffset === null) ? -1 : decisionCurveDayOffsets.indexOf(recommendedSellDayOffset);
+                new Chart(priceDecisionCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: decisionCurveDayOffsets,
+                        datasets: [
+                            {
+                                label: 'Forecast price (EGP/kg)',
+                                data: decisionCurvePrices,
+                                borderColor: '#ef6c00',
+                                backgroundColor: 'rgba(239,108,0,0.12)',
+                                tension: 0.25,
+                                borderWidth: 2,
+                                fill: true
+                            },
+                            {
+                                label: 'Recommended sell day',
+                                data: decisionCurvePrices.map((v, i) => (i === recIdx ? v : null)),
+                                borderColor: '#d32f2f',
+                                backgroundColor: '#d32f2f',
+                                pointRadius: 5,
+                                showLine: false
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            x: { title: { display: true, text: 'Day from start' } },
+                            y: { title: { display: true, text: 'Price (EGP/kg)' } }
+                        }
+                    }
+                });
+            }
+
+            const weightCanvas = document.getElementById('weightGrowthCurveChartStartup');
+            if (weightCanvas && weightCurveDayOffsets.length > 0) {
+                const recIdx = (recommendedSellDayOffset === null) ? -1 : weightCurveDayOffsets.indexOf(recommendedSellDayOffset);
+                new Chart(weightCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: weightCurveDayOffsets,
+                        datasets: [
+                            {
+                                label: 'Avg weight (kg)',
+                                data: weightCurveWeights,
+                                borderColor: '#2e7d32',
+                                backgroundColor: 'rgba(46,125,50,0.12)',
+                                tension: 0.25,
+                                borderWidth: 2,
+                                fill: true
+                            },
+                            {
+                                label: 'Expected sell day',
+                                data: weightCurveWeights.map((v, i) => (i === recIdx ? v : null)),
+                                borderColor: '#1565c0',
+                                backgroundColor: '#1565c0',
+                                pointRadius: 5,
+                                showLine: false
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            x: { title: { display: true, text: 'Day from start' } },
+                            y: { title: { display: true, text: 'Avg weight (kg)' } }
+                        }
+                    }
+                });
+            }
+
+            const costCanvas = document.getElementById('cumulativeCostCurveChartStartup');
+            if (costCanvas && costCurveDayOffsets.length > 0) {
+                const recIdx = (recommendedSellDayOffset === null) ? -1 : costCurveDayOffsets.indexOf(recommendedSellDayOffset);
+                new Chart(costCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: costCurveDayOffsets,
+                        datasets: [
+                            {
+                                label: 'Cumulative cost (EGP)',
+                                data: costCurveCumulativeCosts,
+                                borderColor: '#546e7a',
+                                backgroundColor: 'rgba(84,110,122,0.12)',
+                                tension: 0.25,
+                                borderWidth: 2,
+                                fill: true
+                            },
+                            {
+                                label: 'Expected sell day',
+                                data: costCurveCumulativeCosts.map((v, i) => (i === recIdx ? v : null)),
+                                borderColor: '#ef6c00',
+                                backgroundColor: '#ef6c00',
+                                pointRadius: 5,
+                                showLine: false
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            x: { title: { display: true, text: 'Day from start' } },
+                            y: { title: { display: true, text: 'Cost (EGP)' } }
+                        }
+                    }
+                });
+            }
+
+            const beCanvas = document.getElementById('breakEvenPriceVsCostChartStartup');
+            if (beCanvas && decisionCurveDayOffsets.length > 0) {
+                const beIdx = (decisionBreakEvenDayOffset === null) ? -1 : decisionCurveDayOffsets.indexOf(decisionBreakEvenDayOffset);
+                new Chart(beCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: decisionCurveDayOffsets,
+                        datasets: [
+                            {
+                                label: 'Forecast price (EGP/kg)',
+                                data: decisionCurvePrices,
+                                borderColor: '#ef6c00',
+                                backgroundColor: 'rgba(239,108,0,0.10)',
+                                tension: 0.25,
+                                borderWidth: 2,
+                                fill: false
+                            },
+                            {
+                                label: 'Cost/kg (EGP/kg)',
+                                data: decisionCurveCostPerKg,
+                                borderColor: '#1565c0',
+                                backgroundColor: 'rgba(21,101,192,0.10)',
+                                tension: 0.25,
+                                borderWidth: 2,
+                                fill: false
+                            },
+                            {
+                                label: 'Break-even',
+                                data: decisionCurvePrices.map((v, i) => (i === beIdx ? v : null)),
+                                borderColor: '#2e7d32',
+                                backgroundColor: '#2e7d32',
+                                pointRadius: 5,
+                                showLine: false
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            x: { title: { display: true, text: 'Day from start' } },
+                            y: { title: { display: true, text: 'EGP/kg' } }
+                        }
+                    }
+                });
+            }
+
+            function setupElectricityCalculator() {
+                const kw = document.getElementById('calc_kw');
+                const hours = document.getElementById('calc_hours');
+                const rate = document.getElementById('calc_rate');
+                const result = document.getElementById('calc_result');
+                const mainInput = document.getElementById('electricity_cost_per_day');
+                const applyBtn = document.getElementById('calc_apply');
+                if (!kw || !hours || !rate || !result || !mainInput || !applyBtn) return;
+
+                function refreshDisplay() {
+                    const k = parseFloat(kw.value) || 0;
+                    const h = parseFloat(hours.value) || 24;
+                    const r = parseFloat(rate.value) || 2;
+                    const daily = k * h * r;
+                    result.textContent = daily > 0 ? '≈ ' + daily.toFixed(0) + ' EGP/day' : '—';
+                }
+                function applyToMain() {
+                    const k = parseFloat(kw.value) || 0;
+                    const h = parseFloat(hours.value) || 24;
+                    const r = parseFloat(rate.value) || 2;
+                    const daily = k * h * r;
+                    if (daily > 0) mainInput.value = daily.toFixed(0);
+                    refreshDisplay();
+                }
+
+                applyBtn.addEventListener('click', applyToMain);
+                kw.addEventListener('change', refreshDisplay);
+                hours.addEventListener('change', refreshDisplay);
+                rate.addEventListener('change', refreshDisplay);
+            }
+
+            function setupStartupModeToggle() {
+            const radios = document.querySelectorAll('input[name="mode"]');
+            const simpleFields = document.getElementById('startup-simple-fields');
+            const advancedFields = document.getElementById('startup-advanced-fields');
+            const feedTotalNote = document.getElementById('feed-total-note');
+            if (!radios || !simpleFields || !advancedFields) return;
+
+            radios.forEach(r => {
+                r.addEventListener('change', function () {
+                    if (this.value === 'simple') {
+                        simpleFields.style.display = '';
+                        advancedFields.style.display = 'none';
+                        if (feedTotalNote) feedTotalNote.style.display = 'none';
+                    } else {
+                        simpleFields.style.display = 'none';
+                        advancedFields.style.display = '';
+                        if (feedTotalNote) feedTotalNote.style.display = '';
+                    }
+                });
+            });
+            }
+        })();
+    </script>
+    {% include 'partials/chatbot.html' %}
+</body>
+
+</html>

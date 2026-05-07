@@ -1,0 +1,173 @@
+classDiagram
+    direction TB
+
+    class PoultryMonitoringSystem {
+      +appName: String
+      +version: String
+      +registerModules(): void
+      +run(): void
+    }
+
+    class FinancialModule {
+      +moduleName: String
+      +basePath: String
+      +startup(): HTML
+      +startup_calculate(input): HTML
+      +dashboard_analyze(input): HTML
+      +buildDecisionView(): dict
+    }
+
+    class StartupPlanInput {
+      +number_of_chickens: float
+      +chick_price: float
+      +feed_cost_per_day: float
+      +electricity_cost_per_day: float
+      +labor_cost_per_day: float
+      +medicine_cost_total: float
+      +water_cost_total: float
+      +farm_rent: float
+      +expected_days_to_sell: int
+      +expected_avg_weight_kg: float
+      +mortality_rate_percent: float
+      +selling_price_per_kg: float
+      +validate(): bool
+    }
+
+    class StartupPlanResult {
+      +live_chickens: float
+      +total_weight: float
+      +revenue: float
+      +total_cost: float
+      +profit: float
+      +roi: float
+      +break_even_price: float
+      +cost_breakdown: map
+      +toChartSeries(): list
+    }
+
+    class FinancialCalculator {
+      +version: String
+      +default_cycle_days: int
+      +calculate_startup_plan(input): StartupPlanResult
+      +build_profit_sensitivity_series(input): list
+      +build_mortality_impact_series(input): list
+      +simulate_decision_curves(...): dict
+    }
+
+    class PriceForecastService {
+      +modelName: String
+      +forecast_days: int
+      +train_and_forecast_prophet(): list~PriceForecastRow~
+      +adjust_forecast_to_recent_market(rows): list
+      +evaluate_metrics(): tuple
+    }
+
+    class PriceForecastRow {
+      +date: date
+      +low_price: float
+      +expected_price: float
+      +high_price: float
+    }
+
+    class WeatherService {
+      +default_location: String
+      +cycle_days_default: int
+      +build_weather_based_recommendations(base_mortality, location): list~WeatherCandidate~
+      +classify_temp_band(temp): String
+      +apply_humidity_adjustment(band, temp, rh): String
+    }
+
+    class WeatherCandidate {
+      +start_date: date
+      +end_date: date
+      +adjusted_mortality_percent: float
+      +risk_label: String
+      +avg_temp_max: float
+      +avg_humidity: float
+    }
+
+    class ChatbotModule {
+      +endpoint: String
+      +default_lang: String
+      +chat(message, context, history): String
+      +build_startup_chatbot_context(...): ChatContext
+      +chat_models_list(): list
+    }
+
+    class ChatContext {
+      +page: String
+      +lang: String
+      +inputs: map
+      +outputs: map
+      +charts: map
+    }
+
+    class ChatTurn {
+      +role: String
+      +text: String
+      +timestamp: datetime
+    }
+
+    class GeminiClient {
+      +apiBaseUrl: String
+      +defaultModel: String
+      +list_models(): list
+      +generate_content(model, prompt, contents): String
+      +resolve_model_chain(): list
+    }
+
+    class DiseaseDetectionModule {
+      +modelFile: String
+      +confidence_threshold: float
+      +predict_disease(image): dict
+      +annotate_result(image, result): file
+    }
+
+    class WeightEstimationModule {
+      +modelFile: String
+      +input_size: int
+      +estimate_weight(image): dict
+      +annotate_result(image, result): file
+    }
+
+    class MarketPriceService {
+      +sourceName: String
+      +currency: String
+      +get_today_price(): float
+      +get_today_chick_price(default): float
+      +get_today_feed_prices(): map
+    }
+
+    class UMLChecklist {
+      +classes: present
+      +attributes: present
+      +operations: present
+      +relationships: present
+      +purpose(): "presentation checklist"
+    }
+
+    PoultryMonitoringSystem "1" *-- "1" FinancialModule : contains
+    PoultryMonitoringSystem "1" *-- "1" ChatbotModule : contains
+    PoultryMonitoringSystem "1" *-- "1" DiseaseDetectionModule : contains
+    PoultryMonitoringSystem "1" *-- "1" WeightEstimationModule : contains
+
+    FinancialModule "1" --> "1" FinancialCalculator : uses
+    FinancialModule "1" --> "1" PriceForecastService : uses
+    FinancialModule "1" --> "1" WeatherService : uses
+    FinancialModule "1" --> "1" MarketPriceService : reads
+
+    FinancialModule "1" --> "0..*" StartupPlanInput : receives
+    FinancialModule "1" --> "0..*" StartupPlanResult : renders
+    FinancialCalculator "1" --> "1" StartupPlanInput : computes from
+    FinancialCalculator "1" --> "1" StartupPlanResult : computes
+
+    PriceForecastService "1" --> "1..*" PriceForecastRow : produces
+    WeatherService "1" --> "1..*" WeatherCandidate : produces
+    FinancialModule "1" --> "0..*" PriceForecastRow : includes
+    FinancialModule "1" --> "0..*" WeatherCandidate : includes
+
+    ChatbotModule "1" --> "1" GeminiClient : calls
+    ChatbotModule "1" --> "1" ChatContext : builds
+    ChatContext "1" *-- "0..*" ChatTurn : history
+    FinancialModule "1" --> "1" ChatContext : provides context
+    PoultryMonitoringSystem ..> UMLChecklist : verifies

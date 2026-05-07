@@ -1,6 +1,13 @@
 from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import os
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:
+    pass
 from werkzeug.utils import secure_filename
 import cv2
 from ultralytics import YOLO
@@ -18,9 +25,15 @@ from PIL import Image
 import json
 import torchvision.transforms as T
 import torch.nn.functional as F
+from financial.routes import financial_bp
+from chatbot_routes import chatbot_bp
 
 app = Flask(__name__)
 CORS(app)
+
+# Register blueprints
+app.register_blueprint(financial_bp, url_prefix="/financial")
+app.register_blueprint(chatbot_bp, url_prefix="/api")
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'

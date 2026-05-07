@@ -19,6 +19,8 @@
                 <li class="nav-item"><a href="/dashboard" class="nav-link">Dashboard</a></li>
                 <li class="nav-item"><a href="/disease" class="nav-link active">Disease Detection</a></li>
                 <li class="nav-item"><a href="/weight" class="nav-link">Weight Estimation</a></li>
+                <li class="nav-item"><a href="/financial/startup" class="nav-link">Startup Planner</a></li>
+                <li class="nav-item"><a href="/financial/dashboard" class="nav-link">Financial Dashboard</a></li>
             </ul>
             <div class="hamburger">
                 <span class="bar"></span>
@@ -1093,5 +1095,7 @@
             }
         });
     </script>
+    {% set chatbot_page = 'disease_detection' %}
+    {% include 'partials/chatbot.html' %}
 </body>
 </html>

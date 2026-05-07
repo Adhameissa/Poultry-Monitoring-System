@@ -1,0 +1,36 @@
+{# Floating Gemini assistant — include before </body>. Optional: chatbot_page_context (dict) or chatbot_page (string). #}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+<script type="application/json" id="chatbot-page-context">
+{% if chatbot_page_context is defined %}
+{{ chatbot_page_context|tojson }}
+{% elif chatbot_page is defined %}
+{{ {'page': chatbot_page}|tojson }}
+{% else %}
+{{ {'page': 'unknown'}|tojson }}
+{% endif %}
+</script>
+<div id="chatbot-root" class="chatbot-root" aria-live="polite">
+    <button type="button" id="chatbot-toggle" class="chatbot-toggle" title="Ask the assistant" aria-expanded="false" aria-controls="chatbot-panel">
+        <i class="fas fa-comments"></i>
+    </button>
+    <div id="chatbot-panel" class="chatbot-panel chatbot-panel--closed" aria-hidden="true">
+        <div class="chatbot-header">
+            <span class="chatbot-title"><i class="fas fa-robot"></i> Farm assistant</span>
+            <button type="button" id="chatbot-close" class="chatbot-close" aria-label="Close">&times;</button>
+        </div>
+        <div id="chatbot-messages" class="chatbot-messages"></div>
+        <div class="chatbot-quick-prompts" id="chatbot-quick-prompts" aria-label="Example questions">
+            <span class="chatbot-quick-label">Try:</span>
+            <button type="button" class="chatbot-chip" data-prompt-en="What does ROI mean on this page?" data-prompt-ar="ما معنى العائد على الاستثمار ROI في هذه الشاشة؟">ROI</button>
+            <button type="button" class="chatbot-chip" data-prompt-en="Explain the numbers I see in the results." data-prompt-ar="اشرح لي الأرقام التي تظهر في النتائج.">Explain results</button>
+            <button type="button" class="chatbot-chip" data-prompt-en="What should I enter in the form and why?" data-prompt-ar="ماذا أدخل في النموذج ولماذا؟">What to enter</button>
+            <button type="button" class="chatbot-chip" data-prompt-en="Explain the charts on this page: what each axis shows and what the numbers mean." data-prompt-ar="اشرح لي الرسوم البيانية في هذه الصفحة: ماذا يعني كل محور وماذا تعني الأرقام؟">Explain charts</button>
+        </div>
+        <div class="chatbot-input-row">
+            <textarea id="chatbot-input" class="chatbot-input" rows="2" placeholder="" maxlength="4000"></textarea>
+            <button type="button" id="chatbot-send" class="chatbot-send"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <p class="chatbot-hint">Ask in plain English or Arabic — short questions work best. Powered by Google Gemini.</p>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>

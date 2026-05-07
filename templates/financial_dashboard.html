@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t["existing_farm_dashboard"] }} - Poultry Financials</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .language-toggle {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+        [dir="rtl"] .language-toggle {
+            justify-content: flex-start;
+        }
+        .language-toggle .btn {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+        .language-toggle .active-lang {
+            background-color: var(--primary-green);
+            color: #fff;
+        }
+        .financial-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+        .financial-form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .financial-form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .financial-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .mortality-container {
+            margin-top: 0.5rem;
+        }
+        .mortality-bar {
+            height: 14px;
+            background-color: #e0e0e0;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+        .mortality-fill {
+            height: 100%;
+            background: linear-gradient(to right, #4CAF50, #FFC107, #F44336);
+            width: 0;
+            transition: width 0.5s ease;
+        }
+        .mortality-label {
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            color: #555;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .chart-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        .chart-card h3 {
+            margin-bottom: 0.25rem;
+            color: var(--dark-green);
+        }
+        .chart-card p {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        .profit-status {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .mode-toggle {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .mode-toggle label {
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .info-tooltip {
+            display: inline-block;
+            margin-left: 4px;
+            color: #9e9e9e;
+            cursor: help;
+            font-size: 0.85rem;
+        }
+        .market-prices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem 1.5rem;
+        }
+        .market-price-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .market-price-label {
+            font-size: 0.85rem;
+            color: #555;
+        }
+        .market-price-value {
+            font-weight: 600;
+            color: var(--dark-green);
+        }
+        .excel-preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+        }
+        .excel-preview-table th,
+        .excel-preview-table td {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+        }
+        .excel-preview-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+        .upload-card,
+        .chart-card,
+        .result-card {
+            border: 1px solid rgba(46, 125, 50, 0.12);
+            box-shadow: 0 10px 24px rgba(14, 34, 22, 0.08);
+        }
+        .result-card {
+            background: linear-gradient(145deg, #ffffff, #f7fbf8);
+        }
+        .chart-card {
+            background: linear-gradient(145deg, #ffffff, #f9fcff);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-kiwi-bird"></i>
+                <span>Poultry Monitor</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="/" class="nav-link">{{ 'Home' if lang == 'en' else 'الرئيسية' }}</a></li>
+                <li class="nav-item"><a href="/dashboard" class="nav-link">{{ 'Dashboard' if lang == 'en' else 'لوحة المتابعة' }}</a></li>
+                <li class="nav-item"><a href="/disease" class="nav-link">{{ 'Disease Detection' if lang == 'en' else 'كشف الأمراض' }}</a></li>
+                <li class="nav-item"><a href="/weight" class="nav-link">{{ 'Weight Estimation' if lang == 'en' else 'تقدير الوزن' }}</a></li>
+                <li class="nav-item"><a href="{{ url_for('financial.startup', lang=lang) }}" class="nav-link">{{ t["nav_startup"] }}</a></li>
+                <li class="nav-item"><a href="{{ url_for('financial.dashboard_financial', lang=lang) }}" class="nav-link active">{{ t["nav_dashboard"] }}</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        <div class="page-header" {% if lang == 'ar' %}style="text-align: right;"{% endif %}>
+            <h1>{{ t["existing_farm_dashboard"] }}</h1>
+            <p>{{ t["existing_farm_subtitle"] }}</p>
+        </div>
+
+        <div class="language-toggle">
+            <a href="{{ url_for('financial.dashboard_financial', lang='en') }}" class="btn btn-secondary {% if lang == 'en' %}active-lang{% endif %}">EN</a>
+            <a href="{{ url_for('financial.dashboard_financial', lang='ar') }}" class="btn btn-secondary {% if lang == 'ar' %}active-lang{% endif %}">عربي</a>
+        </div>
+
+        <section class="upload-section">
+            <div class="upload-card" style="margin-bottom: 1.5rem;">
+                <h2><i class="fas fa-chart-line"></i> {{ t["todays_prices"] }}</h2>
+                <p class="kpi-note">{{ t["todays_prices_subtitle"] }}</p>
+                <div class="market-prices-grid">
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["broiler_price"] }}</span>
+                        <span class="market-price-value">{{ '%.2f' % today_broiler_price if today_broiler_price else t['na'] }} {{ t["egp"] }}/kg</span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["broiler_price_range"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_broiler_min and today_broiler_max %}
+                            {{ '%.2f' % today_broiler_min }} - {{ '%.2f' % today_broiler_max }} {{ t["egp"] }}/kg
+                            {% else %}{{ t['na'] }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["chick_price_altkia"] }}</span>
+                        <span class="market-price-value">{{ '%.2f' % today_chick_price if today_chick_price else t['na'] }} {{ t["egp"] }}</span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["chick_price_range"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_chick_min and today_chick_max %}
+                            {{ '%.2f' % today_chick_min }} - {{ '%.2f' % today_chick_max }} {{ t["egp"] }}
+                            {% else %}{{ t['na'] }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["feed_starter"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_feed and today_feed.get('starter_price_per_ton') %}
+                            {{ '%.0f' % today_feed.starter_price_per_ton }} {{ t["egp"] }}/{{ t["per_ton"] }} · {{ '%.2f' % today_feed.starter_price_per_kg }} {{ t["egp"] }}/{{ t["per_kg"] }}
+                            {% else %}{{ t['na'] }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["feed_grower"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_feed and today_feed.get('grower_price_per_ton') %}
+                            {{ '%.0f' % today_feed.grower_price_per_ton }} {{ t["egp"] }}/{{ t["per_ton"] }} · {{ '%.2f' % today_feed.grower_price_per_kg }} {{ t["egp"] }}/{{ t["per_kg"] }}
+                            {% else %}{{ t['na'] }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="market-price-item">
+                        <span class="market-price-label">{{ t["feed_finisher"] }}</span>
+                        <span class="market-price-value">
+                            {% if today_feed and today_feed.get('finisher_price_per_ton') %}
+                            {{ '%.0f' % today_feed.finisher_price_per_ton }} {{ t["egp"] }}/{{ t["per_ton"] }} · {{ '%.2f' % today_feed.finisher_price_per_kg }} {{ t["egp"] }}/{{ t["per_kg"] }}
+                            {% else %}{{ t['na'] }}{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; overflow-x: auto;">
+                    <table class="excel-preview-table">
+                        <thead>
+                            <tr>
+                                <th>{{ t["phase"] }}</th>
+                                <th>{{ t["age"] }}</th>
+                                <th>{{ t["feed_type"] }}</th>
+                                <th>{{ t["avg_consumption"] }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ t["starter_phase"] }}</td>
+                                <td>{{ t["day_1_10"] }}</td>
+                                <td>{{ t["starter_type"] }}</td>
+                                <td>{{ t["starter_range"] }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ t["grower_phase"] }}</td>
+                                <td>{{ t["day_11_24"] }}</td>
+                                <td>{{ t["grower_type"] }}</td>
+                                <td>{{ t["grower_range"] }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ t["finisher_phase"] }}</td>
+                                <td>{{ t["day_25_35"] }}</td>
+                                <td>{{ t["finisher_type"] }}</td>
+                                <td>{{ t["finisher_range"] }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ t["total_phase"] }}</td>
+                                <td>{{ t["days_35"] }}</td>
+                                <td>{{ t["none_dash"] }}</td>
+                                <td>{{ t["total_range"] }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="upload-card">
+                <h2>{{ t["financial_module"] }}</h2>
+                <p>{{ t["currency_egp"] }}</p>
+                <form method="POST" action="{{ url_for('financial.dashboard_analyze', lang=lang) }}">
+                    <input type="hidden" name="lang" value="{{ lang }}">
+
+                    <div class="mode-toggle">
+                        <span>{{ t["mode"] }}:</span>
+                        <label>
+                            <input type="radio" name="mode" value="simple" {% if mode == 'simple' %}checked{% endif %}>
+                            {{ t["mode_simple"] }}
+                        </label>
+                        <label>
+                            <input type="radio" name="mode" value="advanced" {% if mode != 'simple' %}checked{% endif %}>
+                            {{ t["mode_advanced"] }}
+                        </label>
+                    </div>
+
+                    <div id="simple-fields" class="financial-form-grid" style="{% if mode != 'simple' %}display:none;{% endif %}">
+                        <div class="financial-form-group">
+                            <label for="total_cost_so_far">{{ t["total_cost_so_far"] }}</label>
+                            <input type="number" min="0" step="0.01" id="total_cost_so_far" name="total_cost_so_far"
+                                   value="{{ form_values.total_cost_so_far }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="total_weight_current">{{ t["total_weight_current"] }}</label>
+                            <input type="number" min="0" step="0.01" id="total_weight_current" name="total_weight_current"
+                                   value="{{ form_values.total_weight_current }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="chickens_alive">{{ t["chickens_alive"] }}</label>
+                            <input type="number" min="0" step="1" id="chickens_alive" name="chickens_alive"
+                                   value="{{ form_values.chickens_alive }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="selling_price_per_kg">
+                                {{ t["selling_price_per_kg"] }}
+                            </label>
+                            <input type="number" min="0" step="0.01" id="selling_price_per_kg" name="selling_price_per_kg"
+                                   value="{{ form_values.current_market_price_per_kg }}">
+                            <div class="kpi-note">
+                                {{ t["market_price_today"] }}:
+                                {{ '%.2f' % today_market_price }} {{ t["market_price_today_suffix"] }}.
+                                {{ t["manual_price_override"] }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="advanced-fields" class="financial-form-grid" style="{% if mode == 'simple' %}display:none;{% endif %}">
+                        <div class="financial-form-group">
+                            <label for="initial_chickens">{{ t["initial_chickens"] }}</label>
+                            <input type="number" min="0" step="1" id="initial_chickens" name="initial_chickens"
+                                   value="{{ form_values.initial_chickens }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="current_day_number">{{ t["current_day_number"] }}</label>
+                            <input type="number" min="1" step="1" id="current_day_number" name="current_day_number"
+                                   value="{{ form_values.current_day_number }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="daily_feed_cost_total">{{ t["daily_feed_cost_total"] }}</label>
+                            <input type="number" min="0" step="0.01" id="daily_feed_cost_total" name="daily_feed_cost_total"
+                                   value="{{ form_values.daily_feed_cost_total }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="electricity_cost_daily">{{ t["electricity_cost_daily"] }}</label>
+                            <input type="number" min="0" step="0.01" id="electricity_cost_daily" name="electricity_cost_daily"
+                                   value="{{ form_values.electricity_cost_daily }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="labor_cost_daily">{{ t["labor_cost_daily"] }}</label>
+                            <input type="number" min="0" step="0.01" id="labor_cost_daily" name="labor_cost_daily"
+                                   value="{{ form_values.labor_cost_daily }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="medicine_cost_to_date">{{ t["medicine_cost_to_date"] }}</label>
+                            <input type="number" min="0" step="0.01" id="medicine_cost_to_date" name="medicine_cost_to_date"
+                                   value="{{ form_values.medicine_cost_to_date }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="deaths_to_date">{{ t["deaths_to_date"] }}</label>
+                            <input type="number" min="0" step="1" id="deaths_to_date" name="deaths_to_date"
+                                   value="{{ form_values.deaths_to_date }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="avg_weight_now">{{ t["avg_weight_now"] }}</label>
+                            <input type="number" min="0" step="0.01" id="avg_weight_now" name="avg_weight_now"
+                                   value="{{ form_values.avg_weight_now }}">
+                        </div>
+                        <div class="financial-form-group">
+                            <label for="current_market_price_per_kg">
+                                {{ t["current_market_price_per_kg"] }}
+                            </label>
+                            <input type="number" min="0" step="0.01" id="current_market_price_per_kg" name="current_market_price_per_kg"
+                                   value="{{ form_values.current_market_price_per_kg }}">
+                            <div class="kpi-note">
+                                {{ t["market_price_today"] }}:
+                                {{ '%.2f' % today_market_price }} {{ t["market_price_today_suffix"] }}.
+                                {{ t["manual_price_override"] }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="financial-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-chart-line"></i> {{ t["analyze"] }}
+                        </button>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                        {% if lang == 'en' %}
+                            Use this dashboard during the cycle to see if the flock is currently profitable at market price.
+                        {% else %}
+                            استخدم هذه اللوحة أثناء الدورة لتعرف إذا كان القطيع يحقق ربحاً بسعر السوق الحالي أم لا.
+                        {% endif %}
+                    </p>
+                </form>
+            </div>
+        </section>
+
+        <section class="results-section" {% if not results %}style="display: none;"{% endif %}>
+            <h2>{{ t["existing_farm_dashboard"] }}</h2>
+            <div class="kpi-grid">
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-chicken"></i>
+                    </div>
+                    <h3>{{ t["kpi_live_chickens"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:,.0f}'.format(results.live_chickens) }}{% else %}0{% endif %}
+                    </div>
+                    <p>{{ t["initial_chickens"] }}: {{ '{:,.0f}'.format(form_values.initial_chickens) }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-sack-dollar"></i>
+                    </div>
+                    <h3>{{ t["kpi_total_cost"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:,.2f}'.format(results.accumulated_cost) }} {{ t["currency_label"] }}{% else %}0{% endif %}
+                    </div>
+                    <p>{{ t["currency_egp"] }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3>{{ t["kpi_current_value"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:,.2f}'.format(results.current_value) }} {{ t["currency_label"] }}{% else %}0{% endif %}
+                    </div>
+                    <p>{{ t["currency_egp"] }}</p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-scale-balanced"></i>
+                    </div>
+                    <h3>{{ t["kpi_profit_today"] }}</h3>
+                    <div class="result-value" id="profit-value"
+                         style="{% if results and results.profit_today < 0 %}color:#F44336;{% elif results %}color:#4CAF50;{% endif %}">
+                        {% if results %}{{ '{:,.2f}'.format(results.profit_today) }} {{ t["currency_label"] }}{% else %}0{% endif %}
+                    </div>
+                    <p class="profit-status" id="profit-status-text">
+                        {% if results %}
+                            {% if results.profit_today >= 0 %}
+                                {{ t["profit_positive"] }}
+                            {% else %}
+                                {{ t["profit_negative"] }}
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-heart-pulse"></i>
+                    </div>
+                    <h3>{{ t["kpi_mortality"] }}</h3>
+                    <div class="result-value">
+                        {% if results %}{{ '{:.1f}'.format(results.mortality_rate_actual * 100) }}%{% else %}0%{% endif %}
+                    </div>
+                    <div class="mortality-container">
+                        <div class="mortality-bar">
+                            <div class="mortality-fill" id="mortality-fill"></div>
+                        </div>
+                        <div class="mortality-label">
+                            {% if results %}
+                                {{ '{:,.0f}'.format(form_values.deaths_to_date) }} / {{ '{:,.0f}'.format(form_values.initial_chickens) }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="result-card">
+                    <div class="result-icon">
+                        <i class="fas fa-scale-unbalanced"></i>
+                    </div>
+                    <h3>{{ t["kpi_profit_per_chicken"] }}</h3>
+                    <div class="result-value">
+                        {% if results and results.profit_per_chicken is defined %}
+                            {{ '{:,.2f}'.format(results.profit_per_chicken) }} {{ t["currency_label"] }}
+                        {% else %}
+                            {% if results and results.get("profit_today", 0) and results.get("live_chickens", 0) %}
+                                {{ '{:,.2f}'.format(results.profit_today / results.live_chickens) }} {{ t["currency_label"] }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% if results and results.cost_per_kg is defined %}
+                        <p>{{ t["cost_per_kg"] }}: {{ '{:,.2f}'.format(results.cost_per_kg) }} {{ t["currency_label"] }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <h3>{{ t["cost_vs_value"] }}
+                        <span class="info-tooltip" title="{{ t['tooltip_cost_vs_value'] }}">&#9432;</span>
+                    </h3>
+                    <p>{{ t["cost_vs_value_subtitle"] }}</p>
+                    <canvas id="costVsValueChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>{{ t["profit_indicator"] }}
+                        <span class="info-tooltip" title="{{ t['tooltip_profit_per_chicken'] }}">&#9432;</span>
+                    </h3>
+                    <p>{{ t["profit_indicator_subtitle"] }}</p>
+                    <canvas id="profitChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>{{ t["projected_profit_chart"] }}
+                        <span class="info-tooltip" title="{{ t['tooltip_profit_trend'] }}">&#9432;</span>
+                    </h3>
+                    <p>{{ t["projected_profit_chart_subtitle"] }}</p>
+                    <canvas id="profitProjectionChart"></canvas>
+                    {% if best_sell_day_offset is not none and best_sell_absolute_day is not none %}
+                        <p class="kpi-note">
+                            {{ t["best_selling_message"].format(
+                                days=best_sell_day_offset,
+                                absolute_day=best_sell_absolute_day
+                            ) }}
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="chart-card">
+                    <h3>{{ t["mortality_gauge"] }}
+                        <span class="info-tooltip" title="{{ t['tooltip_mortality_gauge'] }}">&#9432;</span>
+                    </h3>
+                    <p>{{ t["mortality_gauge_subtitle"] }}</p>
+                    <canvas id="mortalityGaugeChart"></canvas>
+                </div>
+            </div>
+
+            
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2023 Poultry Monitoring System. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        (function() {
+            const hasResults = {{ 'true' if results else 'false' }};
+            if (!hasResults) {
+                // Still wire up mode toggle for UX
+                setupModeToggle();
+                return;
+            }
+
+            const currencyLabel = {{ t["currency_label"]|tojson }};
+            const costVsValueLabels = {{ cost_vs_value_labels|tojson }};
+            const costVsValueValues = {{ cost_vs_value_values|tojson }};
+            const profitToday = {{ (results.profit_today if results else 0)|tojson }};
+            const mortalityRate = {{ (results.mortality_rate_actual * 100 if results else 0)|tojson }};
+            const projectionDays = {{ projection_days|tojson }};
+            const projectionProfits = {{ projection_profits|tojson }};
+            const chartDefaults = {
+                responsive: true,
+                maintainAspectRatio: true,
+                animation: { duration: 900, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 14, font: { size: 12 } } },
+                    tooltip: {
+                        backgroundColor: 'rgba(19, 31, 25, 0.92)',
+                        titleFont: { size: 12, weight: '600' },
+                        bodyFont: { size: 11 }
+                    }
+                }
+            };
+
+            // Mortality gauge bar (inline)
+            const mortalityFill = document.getElementById('mortality-fill');
+            if (mortalityFill) {
+                let rate = mortalityRate;
+                if (rate < 0) rate = 0;
+                if (rate > 100) rate = 100;
+                mortalityFill.style.width = rate + '%';
+            }
+
+            // Cost vs value bar chart
+            const costCtx = document.getElementById('costVsValueChart');
+            if (costCtx) {
+                new Chart(costCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: costVsValueLabels,
+                        datasets: [{
+                            label: currencyLabel,
+                            data: costVsValueValues,
+                            backgroundColor: ['#ef6c00', '#2e7d32'],
+                            borderColor: ['#c45700', '#1d5f27'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(0,0,0,0.06)' },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString();
+                                    }
+                                }
+                            },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Profit indicator (simple bar showing profit or loss) with break-even line
+            const profitCtx = document.getElementById('profitChart');
+            if (profitCtx) {
+                new Chart(profitCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [{{ t["kpi_profit_today"]|tojson }}],
+                        datasets: [
+                            {
+                                label: currencyLabel,
+                                data: [profitToday],
+                                backgroundColor: [profitToday >= 0 ? '#2e7d32' : '#d32f2f']
+                            },
+                            {
+                                label: {{ t["break_even"]|tojson }},
+                                data: [0],
+                                type: 'line',
+                                borderColor: '#000000',
+                                borderWidth: 1,
+                                pointRadius: 0,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(0,0,0,0.06)' },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Profit projection line chart (also visualizes break-even)
+            const projCtx = document.getElementById('profitProjectionChart');
+            if (projCtx && projectionDays.length > 0) {
+                const zeroLine = projectionDays.map(() => 0);
+                new Chart(projCtx, {
+                    type: 'line',
+                    data: {
+                        labels: projectionDays,
+                        datasets: [
+                            {
+                                label: currencyLabel,
+                                data: projectionProfits,
+                                borderColor: '#1565c0',
+                                backgroundColor: 'rgba(21,101,192,0.12)',
+                                tension: 0.3,
+                                borderWidth: 2,
+                                fill: true
+                            },
+                            {
+                                label: {{ t["break_even"]|tojson }},
+                                data: zeroLine,
+                                borderColor: '#000000',
+                                borderWidth: 1,
+                                borderDash: [4, 4],
+                                pointRadius: 0,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Day from today'
+                                },
+                                grid: { color: 'rgba(0,0,0,0.06)' }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: {{ t["kpi_profit_today"]|tojson }} + " (" + currencyLabel + ")"
+                                },
+                                grid: { color: 'rgba(0,0,0,0.06)' },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Simple mortality gauge donut chart for visual emphasis
+            const mortGaugeCtx = document.getElementById('mortalityGaugeChart');
+            if (mortGaugeCtx) {
+                const rate = Math.max(0, Math.min(100, mortalityRate));
+                new Chart(mortGaugeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [{{ t["kpi_mortality"]|tojson }}, ''],
+                        datasets: [{
+                            data: [rate, 100 - rate],
+                            backgroundColor: ['#F44336', '#C8E6C9']
+                        }]
+                    },
+                    options: {
+                        ...chartDefaults,
+                        cutout: '60%',
+                        plugins: {
+                            ...chartDefaults.plugins,
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            setupModeToggle();
+
+            function setupModeToggle() {
+                const radios = document.querySelectorAll('input[name="mode"]');
+                const simpleFields = document.getElementById('simple-fields');
+                const advancedFields = document.getElementById('advanced-fields');
+                if (!radios || !simpleFields || !advancedFields) return;
+
+                radios.forEach(r => {
+                    r.addEventListener('change', function() {
+                        if (this.value === 'simple') {
+                            simpleFields.style.display = '';
+                            advancedFields.style.display = 'none';
+                        } else {
+                            simpleFields.style.display = 'none';
+                            advancedFields.style.display = '';
+                        }
+                    });
+                });
+            }
+        })();
+    </script>
+    {% include 'partials/chatbot.html' %}
+</body>
+</html>
+

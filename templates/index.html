@@ -19,6 +19,8 @@
                 <li class="nav-item"><a href="/dashboard" class="nav-link">Dashboard</a></li>
                 <li class="nav-item"><a href="/disease" class="nav-link">Disease Detection</a></li>
                 <li class="nav-item"><a href="/weight" class="nav-link">Weight Estimation</a></li>
+                <li class="nav-item"><a href="/financial/startup" class="nav-link">Startup Planner</a></li>
+                <li class="nav-item"><a href="/financial/dashboard" class="nav-link">Financial Dashboard</a></li>
             </ul>
             <div class="hamburger">
                 <span class="bar"></span>
@@ -81,5 +83,7 @@
     </footer>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% set chatbot_page = 'home' %}
+    {% include 'partials/chatbot.html' %}
 </body>
 </html>
